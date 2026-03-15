@@ -35,6 +35,7 @@ def build_validate_df(
     roster_scale: float,
     staffing_df: Optional[pd.DataFrame] = None,
     staffing_source: str = "Generated roster",
+    activity_shrinkage_pct: float = 0.0,
 ) -> pd.DataFrame:
     validate_df = df_det.copy()
 
@@ -66,8 +67,18 @@ def build_validate_df(
         pd.to_numeric(validate_df["available_staff"], errors="coerce").fillna(0.0)
     )
 
+    validate_df["activity_shrinkage_pct"] = float(activity_shrinkage_pct)
+    validate_df["activity_loss_agents"] = (
+        validate_df["available_staff"].astype(float) * validate_df["activity_shrinkage_pct"].astype(float)
+    )
+    validate_df["effective_available_staff"] = (
+        validate_df["available_staff"].astype(float) - validate_df["activity_loss_agents"].astype(float)
+    ).clip(lower=0.0)
+
     if staffing_source == "Imported staffing availability":
         source_curve = validate_df["available_staff"]
+    elif staffing_source == "Imported effective staffing availability":
+        source_curve = validate_df["effective_available_staff"]
     elif staffing_source == "Tighter of the two":
         source_curve = np.minimum(
             validate_df["roster_net_agents"].astype(float),
@@ -142,6 +153,7 @@ def run_simulation(
     break_schedule: Optional[list] = None,
     staffing_df: Optional[pd.DataFrame] = None,
     staffing_source: str = "Generated roster",
+    activity_shrinkage_pct: float = 0.0,
 ) -> Dict:
     """
     Central simulation wrapper.
@@ -158,6 +170,7 @@ def run_simulation(
         roster_scale=roster_scale,
         staffing_df=staffing_df,
         staffing_source=staffing_source,
+        activity_shrinkage_pct=float(activity_shrinkage_pct),
     )
 
     sim_out = run_des_engine(
