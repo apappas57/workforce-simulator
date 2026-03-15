@@ -331,6 +331,65 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
                     use_container_width=True,
                 )
 
+                operational_view = operational_view.copy()
+                operational_view["roster_minus_supply"] = (
+                    operational_view["roster_net_agents"].astype(float)
+                    - operational_view["available_staff"].astype(float)
+                )
+                operational_view["roster_minus_requirement"] = (
+                    operational_view["roster_net_agents"].astype(float)
+                    - operational_view["erlang_required_net_agents"].astype(float)
+                )
+                operational_view["supply_minus_requirement"] = (
+                    operational_view["available_staff"].astype(float)
+                    - operational_view["erlang_required_net_agents"].astype(float)
+                )
+                operational_view["roster_over_supply"] = operational_view["roster_minus_supply"].clip(lower=0.0)
+                operational_view["supply_over_roster"] = (-operational_view["roster_minus_supply"]).clip(lower=0.0)
+
+                rc1, rc2, rc3, rc4 = st.columns(4)
+                rc1.metric("Peak roster minus supply", f"{operational_view['roster_minus_supply'].max():.1f}")
+                rc2.metric("Peak supply minus roster", f"{operational_view['supply_over_roster'].max():.1f}")
+                rc3.metric(
+                    "Intervals roster > supply",
+                    int((operational_view["roster_minus_supply"] > 0).sum()),
+                )
+                rc4.metric(
+                    "Intervals supply > roster",
+                    int((operational_view["roster_minus_supply"] < 0).sum()),
+                )
+
+                st.plotly_chart(
+                    px.bar(
+                        operational_view,
+                        x=x_col,
+                        y="roster_minus_supply",
+                        color="date_local" if (use_ts and "date_local" in operational_view.columns) else None,
+                        title="Roster NET minus imported staffing supply",
+                    ),
+                    use_container_width=True,
+                )
+
+                comparison_cols = list(dict.fromkeys([
+                    c for c in [
+                        x_col,
+                        "date_local",
+                        "start_ts_local",
+                        "interval_in_day",
+                        "erlang_required_net_agents",
+                        "available_staff",
+                        "roster_net_agents",
+                        "supply_minus_requirement",
+                        "roster_minus_requirement",
+                        "roster_minus_supply",
+                        "supply_under_requirement",
+                        "roster_under_requirement",
+                    ] if c in operational_view.columns
+                ]))
+
+                st.markdown("#### Roster vs imported supply detail")
+                st.dataframe(operational_view[comparison_cols].round(3), use_container_width=True)
+
         req_plot = comp_view.melt(
             id_vars=[c for c in ["interval", "date_local", "start_ts_local"] if c in comp_view.columns],
             value_vars=["roster_net_agents", "erlang_required_net_agents"],

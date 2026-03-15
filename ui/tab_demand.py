@@ -78,13 +78,37 @@ def _build_staffing_daily_summary(staffing_preview: pd.DataFrame) -> pd.DataFram
         .values
     )
 
+    if "activity_loss_agents" in staffing_preview.columns:
+        daily["total_activity_loss_agents"] = (
+            staffing_preview.groupby("date_local")["activity_loss_agents"].sum().values
+        )
+
+    if "effective_available_staff" in staffing_preview.columns:
+        daily["peak_effective_available_staff"] = (
+            staffing_preview.groupby("date_local")["effective_available_staff"].max().values
+        )
+
+    if "effective_under_supply_agents" in staffing_preview.columns:
+        daily["total_effective_under_supply_agents"] = (
+            staffing_preview.groupby("date_local")["effective_under_supply_agents"].sum().values
+        )
+
     daily["coverage_ratio"] = np.where(
         daily["peak_erlang_requirement"] > 0,
         daily["peak_available_staff"] / daily["peak_erlang_requirement"],
         np.nan,
     )
 
+    if "peak_effective_available_staff" in daily.columns:
+        daily["effective_coverage_ratio"] = np.where(
+            daily["peak_erlang_requirement"] > 0,
+            daily["peak_effective_available_staff"] / daily["peak_erlang_requirement"],
+            np.nan,
+        )
+        daily["effective_coverage_ratio"] = daily["effective_coverage_ratio"].round(3)
+
     daily["coverage_ratio"] = daily["coverage_ratio"].round(3)
+
     return daily
 
 def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
@@ -168,6 +192,38 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
         staffing_preview = _build_staffing_preview_df(df_erlang_view, staffing_df_view)
         staffing_preview = ensure_x_col(staffing_preview, x_col)
 
+        st.markdown("#### Activity modelling")
+        activity_shrinkage_pct = st.slider(
+            "Activity shrinkage %",
+            min_value=0.0,
+            max_value=0.6,
+            value=0.15,
+            step=0.01,
+            key="demand_activity_shrinkage_pct",
+            help="Applies an activity-based capacity reduction to imported available staff for comparison only.",
+        )
+        st.caption("Raw imported available_staff is unchanged. Effective capacity below is a derived comparison layer only.")
+
+        staffing_preview["activity_shrinkage_pct"] = float(activity_shrinkage_pct)
+        staffing_preview["activity_loss_agents"] = (
+            staffing_preview["available_staff"].astype(float) * staffing_preview["activity_shrinkage_pct"].astype(float)
+        )
+        staffing_preview["effective_available_staff"] = (
+            staffing_preview["available_staff"].astype(float) - staffing_preview["activity_loss_agents"].astype(float)
+        ).clip(lower=0.0)
+        staffing_preview["dynamic_shrinkage_pct"] = np.where(
+            staffing_preview["available_staff"].astype(float) > 0,
+            staffing_preview["activity_loss_agents"].astype(float) / staffing_preview["available_staff"].astype(float),
+            0.0,
+        )
+        staffing_preview["effective_supply_gap_agents"] = (
+            staffing_preview["effective_available_staff"].astype(float)
+            - staffing_preview["erlang_required_net_agents"].astype(float)
+        )
+        staffing_preview["effective_under_supply_agents"] = (
+            -staffing_preview["effective_supply_gap_agents"]
+        ).clip(lower=0.0)
+
         st.session_state["staffing_gap_export"] = staffing_preview.copy()
 
         staffing_daily_summary = _build_staffing_daily_summary(staffing_preview)
@@ -177,16 +233,16 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
             st.warning("No staffing rows available for the selected day.")
         else:
             c1, c2, c3 = st.columns(3)
-            c1.metric("Peak available staff", int(staffing_preview["available_staff"].fillna(0).max()))
-            c2.metric("Peak Erlang requirement", int(staffing_preview["erlang_required_net_agents"].fillna(0).max()))
+            c1.metric("Peak raw available staff", int(staffing_preview["available_staff"].fillna(0).max()))
+            c2.metric("Peak effective available staff", int(staffing_preview["effective_available_staff"].fillna(0).max()))
             c3.metric(
-                "Intervals below requirement",
-                int((staffing_preview["under_supply_agents"] > 0).sum()),
+                "Effective intervals below requirement",
+                int((staffing_preview["effective_under_supply_agents"] > 0).sum()),
             )
 
             supply_plot = staffing_preview.melt(
                 id_vars=[c for c in [x_col, "date_local"] if c in staffing_preview.columns],
-                value_vars=["available_staff", "erlang_required_net_agents"],
+                value_vars=["available_staff", "effective_available_staff", "erlang_required_net_agents"],
                 var_name="series",
                 value_name="agents",
             )
@@ -199,7 +255,7 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
                     y="agents",
                     color="series",
                     line_group="date_local" if (use_ts and "date_local" in supply_plot.columns) else None,
-                    title="Staffing supply vs Erlang requirement",
+                    title="Raw and effective staffing supply vs Erlang requirement",
                 ),
                 use_container_width=True,
             )
@@ -208,16 +264,36 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
                 px.bar(
                     staffing_preview,
                     x=x_col,
-                    y="under_supply_agents",
+                    y="effective_under_supply_agents",
                     color="date_local" if (use_ts and "date_local" in staffing_preview.columns) else None,
-                    title="Intervals where supply is below requirement",
+                    title="Intervals where effective supply is below requirement",
                 ),
                 use_container_width=True,
             )
 
+            preview_cols = list(dict.fromkeys([
+                c for c in [
+                    x_col,
+                    "date_local",
+                    "start_ts_local",
+                    "interval_in_day",
+                    "erlang_required_net_agents",
+                    "available_staff",
+                    "activity_loss_agents",
+                    "effective_available_staff",
+                    "supply_gap_agents",
+                    "effective_supply_gap_agents",
+                    "under_supply_agents",
+                    "effective_under_supply_agents",
+                ] if c in staffing_preview.columns
+            ]))
+
+            st.markdown("#### Staffing preview detail")
+            st.dataframe(staffing_preview[preview_cols].round(3), use_container_width=True)
+
             if not staffing_daily_summary.empty:
                 st.markdown("#### Staffing daily summary")
-                st.dataframe(staffing_daily_summary, use_container_width=True)
+                st.dataframe(staffing_daily_summary.round(3), use_container_width=True)
 
     daily_summary = _build_demand_daily_summary(df_erlang_view)
     st.session_state["demand_daily_summary"] = daily_summary.copy()
