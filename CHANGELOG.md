@@ -1,0 +1,558 @@
+# Changelog
+## 2026-03-13
+
+### Added
+Phase 6 staffing supply import foundation.
+
+A staffing supply input path was introduced to support:
+
+- staffing CSV upload
+- canonical staffing schema
+- flexible source column mapping
+- staffing validation
+
+This establishes the base for future workforce supply modelling and activity-based shrinkage development.
+
+---
+
+### Added
+Staffing supply preview in Demand tab.
+
+Demand tab now supports comparison between:
+
+- available_staff
+- erlang_required_net_agents
+
+Additional outputs include:
+
+- staffing supply vs requirement chart
+- under-supply interval chart
+- staffing daily summary table
+- staffing gap export dataset
+
+---
+
+### Added
+Additional supply-related exports.
+
+Downloads flow was extended to support:
+
+- staffing_daily_summary.csv
+- staffing_gap_export.csv
+
+These outputs are stored in session state in the same pattern as demand, roster, and DES summary exports.
+
+---
+
+### Improvements
+Shared x-axis helper introduced.
+
+A central ensure_x_col helper was added to the date view utility and adopted across Demand, Roster, and DES tabs.
+
+This removes duplicated helper logic and improves timestamp/interval plotting safety.
+
+---
+
+### Improvements
+UI stability and debug fixes.
+
+Multiple runtime and rendering fixes were applied including:
+
+- guarded staffing loader import in app startup
+- corrected num_intervals handling for timestamp-based demand
+- cleaned schema-aware date_local handling for interval-based demand
+- duplicate timestamp validation after timezone conversion
+- safer roster/requirement merge behaviour
+- infeasible LP solver handling
+- Legacy DES indexing fix (.iloc)
+- Erlang iteration cleanup using array iteration
+- duplicate Streamlit key fixes
+- x-axis radio option fixes in Roster and DES tabs
+- removal of stale helper references after shared-helper migration
+
+---
+
+### Impact
+The simulator now supports:
+
+- early-stage workforce supply ingestion
+- supply vs requirement operational comparison
+- supply-related exports
+- stronger tab stability
+- cleaner shared plotting behaviour
+
+## 2026-03-09
+
+### Added
+Multi-day operational modelling support.
+
+Demand ingestion now supports:
+- start_ts_local
+- date_local
+- interval_in_day
+- global_interval
+
+These allow demand modelling across multiple days while preserving compatibility with interval-based models.
+
+---
+
+### Added
+Date-aware visualisation layer.
+
+Demand, roster, and DES charts now support:
+
+- timestamp x-axis
+- interval x-axis fallback
+- full horizon view
+- selected day view
+
+Date view controls allow filtering of multi-day datasets safely without affecting modelling logic.
+
+---
+
+### Added
+Daily operational summaries.
+
+Daily summary tables were introduced across key modules:
+
+Demand summary includes:
+- total calls
+- peak requirement
+- predicted service level
+- predicted occupancy
+
+Roster summary includes:
+- total calls
+- peak requirement
+- peak roster
+- coverage ratio
+
+DES summary includes:
+- total calls
+- service level
+- ASA
+- abandonment rate
+
+---
+
+### Added
+Executive summary panel in DES tab.
+
+High-level KPI cards now display:
+
+- Total calls
+- Peak requirement
+- Peak roster
+- Service level
+- ASA
+- Abandon rate
+
+These metrics are derived directly from existing DES outputs.
+
+---
+
+### Added
+Validation and warning layer.
+
+User-facing warnings now appear when:
+
+- timestamp mode unavailable
+- selected day contains no rows
+- daily summaries unavailable
+- scenario multipliers active
+- roster/requirement metadata mismatch
+
+This improves usability without modifying modelling behaviour.
+
+---
+
+### Added
+Exportable operational summaries.
+
+Downloads tab now supports exporting:
+
+- demand_daily_summary.csv
+- roster_daily_summary.csv
+- des_daily_summary.csv
+
+Summaries are stored in session state and exported without recomputation.
+
+---
+
+### Improvements
+Simulator stability improvements.
+
+Multiple fixes applied during development including:
+
+- scope corrections for req_col
+- scenario multiplier variable corrections
+- defensive checks for missing timestamp metadata
+- solver result safety checks
+- prevention of stale session state summaries
+
+---
+
+### Impact
+The simulator now supports:
+
+- multi-day operational modelling
+- scenario testing
+- executive KPI dashboards
+- operational summary exports
+- improved UI validation
+
+## 2026-03-07
+
+### Added
+DES v2 simulation engine.
+
+### Improvements
+Explicit call lifecycle modelling.
+Queue length diagnostics.
+Agent busy/idle metrics.
+DES engine selector in UI.
+
+### Notes
+Legacy DES retained for comparison.
+
+---
+
+## 2026-03-08
+
+### Improvements
+Time-weighted queue and agent state metrics added to DES v2.
+
+Queue length now computed using time-weighted integration rather than snapshot sampling.
+
+Agent busy and idle metrics converted to interval averages.
+
+### Impact
+Improves simulation accuracy and stability of operational diagnostics.
+
+---
+
+## 2026-03-08 (later)
+
+### Added
+Break modelling framework.
+
+Two break modelling modes:
+Manual interval break blocks.
+Shift-based break generation using shift templates and break rules.
+
+Break curve visualisation added to DES tab.
+
+Break schedules now dynamically reduce available agents during simulation.
+
+### Added
+DES staffing solver.
+
+Solver iteratively adjusts staffing per interval to reach operational targets.
+
+Solver outputs include:
+Base staffing vs solver-required staffing chart.
+Staff added per interval chart.
+Solver diagnostics metrics.
+
+### Improvements
+Solver now evaluates both:
+Service level performance
+Abandonment rate
+
+Intervals are flagged as failing when:
+
+Service level < target  
+OR  
+Abandonment rate > target
+
+### Diagnostics
+Solver now reports:
+
+Final service level
+Final abandonment rate
+Stop reason:
+Target met
+Stagnated
+Iteration cap reached
+
+---
+
+## 2026-03-08 (latest)
+
+### Added
+Central simulation wrapper.
+
+simulation/des_runner.py now acts as the common simulation entry point.
+
+### Added
+Scenario stress testing engine.
+
+analysis/scenario_runner.py introduced to:
+
+apply scenario shocks  
+run DES  
+run staffing solver on shocked conditions
+
+### Added
+Scenario controls in DES tab.
+
+Current scenario inputs include:
+
+Volume multiplier  
+AHT multiplier  
+Patience multiplier
+
+### Improvements
+Staffing solver diagnostics expanded.
+
+New solver outputs include:
+
+Peak staff delta  
+Max interval uplift  
+Total staff added  
+Final DES SL  
+Final abandon  
+Stop reason
+
+### Improvements
+Solver convergence improved through:
+
+adaptive interval uplift  
+neighbour smoothing  
+abandonment-aware failing interval logic  
+stagnation handling
+
+---
+
+## 2026-03-08 (late development session)
+
+### Added
+Interval-based workforce simulation framework.
+
+The simulator now models contact centre demand using fixed-length time intervals
+(default 15 minutes) rather than daily aggregates.
+
+Core interval metrics now include:
+
+Calls offered  
+Average handle time  
+Workload seconds  
+Workload hours  
+Required concurrent agents
+
+### Added
+Deterministic workforce model.
+
+Deterministic staffing calculation introduced to estimate required agents per interval using workload mathematics.
+
+Outputs include:
+
+Workload hours per interval  
+Required concurrent agents  
+Required agents after occupancy cap  
+Required agents after shrinkage  
+Peak staffing requirement  
+Average staffing requirement
+
+### Added
+Erlang-C staffing model.
+
+Queueing theory model added to estimate:
+
+Required staffing  
+Predicted service level  
+Predicted ASA  
+Predicted occupancy
+
+Erlang solver now operates at the interval level to support realistic demand curves.
+
+### Added
+Roster generation engine.
+
+Shift-based roster generation implemented with configurable:
+
+Shift start times  
+Shift durations  
+Paid vs unpaid lunch handling  
+Shift template definitions
+
+Roster output produces a coverage curve representing available agents per interval.
+
+### Added
+Roster coverage gap analysis.
+
+Gap analysis compares roster coverage to required staffing.
+
+Diagnostics now include:
+
+Understaffed intervals  
+Overstaffed intervals  
+Coverage vs requirement chart
+
+### Added
+Roster scaling optimiser.
+
+Roster scaling introduced to allow rapid testing of staffing changes.
+
+Scaling adjusts roster headcount proportionally to observe impact on service levels.
+
+### Added
+Shift start optimisation (greedy algorithm).
+
+Greedy optimiser introduced to place heads across allowed shift start times.
+
+Optimisation objective:
+
+Reduce understaffing  
+Minimise overstaffing penalties
+
+Outputs include:
+
+Recommended shift start plan  
+Coverage curve generated from optimiser
+
+### Added
+Linear programming shift optimisation engine.
+
+Integer programming solver implemented using PuLP.
+
+The solver determines the optimal mix of shift start times and shift lengths that:
+
+Minimise total staffing  
+Ensure coverage meets interval requirements
+
+Outputs include:
+
+Optimal shift schedule  
+Shift start times  
+Shift lengths  
+Headcount allocation
+
+### Added
+Discrete Event Simulation (DES) validation framework.
+
+DES simulation introduced using SimPy to replicate real call centre behaviour.
+
+Simulation models:
+
+Call arrivals  
+Queue waiting  
+Agent availability  
+Service completion
+
+DES produces operational metrics including:
+
+Service level  
+Average speed of answer  
+Agent occupancy
+
+### Added
+Customer abandonment modelling.
+
+Customer patience distributions added to DES simulation.
+
+Supported distributions:
+
+Exponential  
+Lognormal
+
+Simulation now tracks:
+
+Abandon rate  
+Answered calls  
+Abandoned calls  
+Queue delays
+
+### Added
+DES validation tab in UI.
+
+Simulation validation interface introduced to compare predicted vs simulated performance.
+
+DES tab includes:
+
+Service time distribution selector  
+Staffing multiplier testing  
+Patience distribution controls
+
+Outputs include interval-level charts for:
+
+Service level  
+ASA  
+Occupancy  
+Abandonment
+
+### Added
+Scenario comparison framework.
+
+Scenario testing introduced to allow multiple demand or operational shocks to be evaluated.
+
+Scenario engine supports:
+
+Baseline scenario  
+Scenario A  
+Scenario B  
+Scenario C
+
+Each scenario may apply:
+
+Volume multiplier  
+AHT multiplier  
+Shrinkage override  
+Occupancy cap override  
+Service level target override
+
+Scenario results display:
+
+Peak staffing  
+Average service level  
+Average occupancy
+
+Scenario curves allow interval comparison between scenarios.
+
+### Added
+Timezone-aware demand ingestion.
+
+Demand CSV loader updated to support timestamp-based inputs.
+
+The system now supports:
+
+Input timezone selection  
+Model / display timezone selection
+
+Timestamps are converted using:
+
+Input timezone → modelling timezone
+
+Additional derived fields include:
+
+start_ts_local  
+date_local  
+time_local
+
+This ensures demand intervals align with operational time zones such as Australia/Melbourne.
+
+### Improvements
+Demand ingestion flexibility.
+
+Demand files now support two schemas:
+
+Interval-based demand tables  
+Timestamp-based demand tables
+
+Timestamp-based datasets are automatically sorted and converted to interval indices.
+
+### Improvements
+Simulator architecture stability.
+
+Multiple debugging fixes were applied during development including:
+
+Variable scope fixes  
+Indentation corrections  
+Removal of duplicate optimiser implementations  
+Correction of undefined variable references in Streamlit execution flow
+
+### Notes
+These changes collectively establish the first fully functional version of the
+Call Centre Workforce Simulator, integrating deterministic staffing,
+Erlang queueing theory, roster modelling, optimisation engines,
+and discrete event simulation validation into a unified tool.
