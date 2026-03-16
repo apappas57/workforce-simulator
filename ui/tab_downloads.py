@@ -33,6 +33,7 @@ def render_downloads_tab(df_inputs, df_erlang, roster_df):
     des_daily_summary = st.session_state.get("des_daily_summary", pd.DataFrame())
     staffing_daily_summary = st.session_state.get("staffing_daily_summary", pd.DataFrame())
     staffing_gap_export = st.session_state.get("staffing_gap_export", pd.DataFrame())
+    planning_projection = st.session_state.get("planning_projection", pd.DataFrame())
 
     if (
         demand_daily_summary.empty
@@ -40,6 +41,7 @@ def render_downloads_tab(df_inputs, df_erlang, roster_df):
         and des_daily_summary.empty
         and staffing_daily_summary.empty
         and staffing_gap_export.empty
+        and planning_projection.empty
     ):
         st.info("Daily summary exports will appear after the relevant tabs have been opened and summaries have been generated.")
 
@@ -87,6 +89,20 @@ def render_downloads_tab(df_inputs, df_erlang, roster_df):
             mime="text/csv",
         )
         pack["staffing_gap_export.csv"] = to_csv_bytes(staffing_gap_export)
+
+    if isinstance(planning_projection, pd.DataFrame) and not planning_projection.empty:
+        # Flatten period_start to string for clean CSV output
+        planning_export = planning_projection.copy()
+        if "period_start" in planning_export.columns:
+            planning_export["period_start"] = planning_export["period_start"].dt.strftime("%Y-%m-%d")
+
+        st.download_button(
+            "Download workforce planning projection CSV",
+            data=to_csv_bytes(planning_export),
+            file_name="planning_projection.csv",
+            mime="text/csv",
+        )
+        pack["planning_projection.csv"] = to_csv_bytes(planning_export)
 
     if roster_df is not None and not roster_df.empty:
         roster_curve_cols = ["interval", "roster_net_agents"]

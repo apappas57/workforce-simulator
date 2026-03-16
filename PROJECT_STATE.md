@@ -110,27 +110,40 @@ Applies scenario shocks to demand inputs and optionally runs the staffing solver
 
 ---
 
+## Planning Layer (Phase 7)
+
+planning/workforce_planner.py
+Monthly workforce projection engine. Accepts PlanningParams and optional hiring/required-FTE DataFrames. Tracks cohort-based training and ramp states. Pure Python — no Streamlit dependency.
+
+planning/hiring_loader.py
+CSV loaders for hiring_plan.csv and required_fte_plan.csv. Validates column presence, date parsing, no duplicates, and non-negative values.
+
+---
+
 ## UI Layer
 
-ui/sidebar.py  
+ui/sidebar.py
 Global sidebar controls for simulation parameters.
 
-ui/tab_demand.py  
+ui/tab_demand.py
 Demand configuration and visualisation tab.
 
-ui/tab_roster.py  
+ui/tab_roster.py
 Roster generation and optimisation interface.
 
-ui/tab_des.py  
+ui/tab_des.py
 DES simulation controls, break modelling, solver configuration, scenario stress testing, and diagnostics.
 
-ui/tab_scenarios.py  
+ui/tab_scenarios.py
 Scenario modelling interface.
 
-ui/tab_downloads.py  
+ui/tab_planning.py
+Strategic Workforce Planning tab (Phase 7). Owns its own file uploaders and planning parameter inputs. Writes planning_projection to session state.
+
+ui/tab_downloads.py
 Export utilities for CSV and ZIP outputs.
 
-ui/date_view.py  
+ui/date_view.py
 Now also contains a shared ensure_x_col helper used across Demand, Roster, and DES tabs for timestamp/interval-safe plotting.
 
 ---
@@ -144,27 +157,34 @@ Handles CSV and ZIP export generation.
 
 # Current Capabilities
 
-Demand modelling  
-Deterministic staffing estimation  
-Erlang C queue modelling  
-Roster generation from shift templates  
-Roster scaling optimisation  
-Greedy shift start optimisation  
-Linear programming shift optimisation  
-Discrete event simulation (DES)  
-Customer abandonment modelling  
-Manual break modelling  
-Shift-based break generation  
-DES staffing solver  
-Scenario stress testing  
-Operational diagnostics  
+Demand modelling
+Deterministic staffing estimation
+Erlang C queue modelling
+Roster generation from shift templates
+Roster scaling optimisation
+Greedy shift start optimisation
+Linear programming shift optimisation
+Discrete event simulation (DES)
+Customer abandonment modelling
+Manual break modelling
+Shift-based break generation
+DES staffing solver
+Scenario stress testing
+Operational diagnostics
 CSV and ZIP export
-Staffing supply import foundation  
-Staffing supply preview and comparison  
-Staffing daily summary output  
-Staffing gap export output  
-Shared date-aware x-axis handling  
+Staffing supply import foundation
+Staffing supply preview and comparison
+Staffing daily summary output
+Staffing gap export output
+Shared date-aware x-axis handling
 UI startup and rendering hardening
+Monthly workforce projection (Phase 7)
+Cohort-based training and ramp pipeline modelling
+Hiring plan CSV ingestion
+Required FTE plan CSV ingestion
+FTE capacity gap analysis (surplus/deficit)
+Workforce Planning tab
+Planning projection export
 
 # Workforce Supply Capabilities
 
@@ -317,19 +337,17 @@ Scenario output comparison visuals are still early-stage.
 
 Multi-day forecasting not yet implemented.
 
-Attrition and hiring models not yet implemented.
-
 ---
 
 # Current Development Phase
 
-Phase 4 completed in practice for core DES accuracy improvements.
+Phase 7 complete.
 
-Current focus is in Phase 6 workforce supply development, including:
+Next phase is Phase 8: Optimisation Engine.
 
-staffing import foundation  
-supply preview and export workflows  
-UI stability hardening  
-preparation for activity modelling  
-preparation for dynamic shrinkage calculation
+Potential Phase 8 scope includes:
+
+cost modelling per FTE
+optimal hire timing to minimise surplus/deficit
+scenario comparison across hiring strategies
 

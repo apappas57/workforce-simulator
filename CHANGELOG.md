@@ -1,4 +1,102 @@
 # Changelog
+## 2026-03-16
+
+### Added
+Phase 7 strategic workforce planning foundation.
+
+A monthly workforce projection engine was introduced to model headcount and
+effective FTE over a configurable planning horizon.
+
+Core projection engine (planning/workforce_planner.py):
+
+- Cohort-based tracking of new hire cohorts through training and ramp states
+- Monthly attrition applied proportionally across all headcount
+- Training phase: configurable duration and productivity contribution
+- Ramp phase: linear interpolation from ramp_start_pct to 100 % FTE
+- Shrinkage applied from the existing operational model to produce available_fte
+- surplus_deficit column derived from available_fte vs required_fte
+
+---
+
+### Added
+Planning CSV loaders (planning/hiring_loader.py).
+
+Two new CSV formats supported:
+
+- hiring_plan.csv — columns: period_start (YYYY-MM-DD), planned_hires
+- required_fte_plan.csv — columns: period_start (YYYY-MM-DD), required_fte
+
+Both loaders validate column presence, date parsing, no duplicate periods,
+and non-negative values. Months absent from the hiring plan default to zero
+hires in the projection.
+
+---
+
+### Added
+Workforce Planning tab (ui/tab_planning.py).
+
+New tab added between Scenario Compare and Downloads:
+
+- Planning parameter inputs: horizon, opening headcount, attrition rate,
+  training duration and productivity, ramp duration and start productivity
+- File uploaders for hiring_plan.csv and required_fte_plan.csv
+- Summary metrics: closing headcount, total hires, peak attrition,
+  avg surplus FTE, months below FTE target
+- Three charts: headcount over time, workforce pipeline breakdown (stacked),
+  available FTE vs required FTE with surplus/deficit band
+- Projection data table
+
+---
+
+### Added
+Phase 7 session state keys registered in app.py:
+
+- planning_projection (DataFrame)
+- planning_hiring_plan (DataFrame)
+- planning_required_fte (DataFrame)
+
+---
+
+### Added
+Planning projection export in Downloads tab.
+
+planning_projection.csv added to individual download buttons and included
+in the ZIP pack.
+
+---
+
+### Added
+Test suite for projection engine (tests/test_workforce_planner.py).
+
+15 unit tests covering:
+
+- Output shape and column presence
+- Stable state (no attrition, no hires)
+- Attrition-driven headcount decay
+- Headcount flow identity
+- Training pipeline: new hires invisible until training elapses
+- Ramp partial FTE calculation
+- Zero training and ramp: immediate full productivity
+- Shrinkage applied to effective FTE
+- Required FTE and surplus/deficit
+- No hiring plan defaults to zero hires
+- No required FTE produces NaN columns
+- Period label correctness
+- Attrition clamp prevents negative headcount
+- Future-period hires not visible in earlier periods
+
+---
+
+### Impact
+The simulator now supports:
+
+- Multi-month workforce planning distinct from the intraday DES layer
+- Cohort-level training and ramp pipeline visibility
+- FTE capacity gap analysis against a configurable demand plan
+- Export of planning projections alongside operational outputs
+
+---
+
 ## 2026-03-13
 
 ### Added

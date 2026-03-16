@@ -27,16 +27,14 @@ Simulation design notes: see DES_NOTES.md
 | 4 | Simulation accuracy (DES v2) | ✅ Complete |
 | 5 | Multi-day simulation | ✅ Complete |
 | 6 | Workforce supply model | ✅ Complete |
-| 7 | Strategic workforce planning | 🔜 Next |
-| 8 | Optimisation engine | ⬜ Pending |
+| 7 | Strategic workforce planning | ✅ Complete |
+| 8 | Optimisation engine | 🔜 Next |
 | 9 | Platform development | ⬜ Pending |
 
-Phase 7 scope: attrition modelling, hiring pipeline simulation, training ramp
-modelling, capacity projections, annual planning scenarios.
-
-**Before starting Phase 7:** define the attrition/hiring input schema first.
-This is the highest-impact decision — it touches session state, the supply
-layer, and all downstream exports.
+Phase 7 delivered: monthly workforce projection engine with cohort-based
+training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
+plan CSV, capacity gap analysis (surplus/deficit), Workforce Planning tab,
+planning_projection export. 15 unit tests added.
 
 ---
 
@@ -73,8 +71,11 @@ Demand Input
 | `optimisation/greedy_shift_optimizer.py` | Greedy heuristic for shift start placement |
 | `analysis/gap_analysis.py` | Roster vs requirement gap computation |
 | `analysis/scenario_runner.py` | Scenario shock application |
+| `planning/workforce_planner.py` | **Phase 7 projection engine** — PlanningParams dataclass + project_workforce() |
+| `planning/hiring_loader.py` | Loaders for hiring_plan.csv and required_fte_plan.csv |
 | `ui/sidebar.py` | Global sidebar — returns dict of all inputs |
 | `ui/tab_*.py` | One file per tab; tabs are rendered in app.py |
+| `ui/tab_planning.py` | Workforce Planning tab (Phase 7) |
 | `ui/date_view.py` | Shared date/interval view helpers + `ensure_x_col` |
 | `utils/export.py` | CSV + ZIP export generation |
 
@@ -99,6 +100,9 @@ instead.
 | `staffing_daily_summary` | DataFrame | tab_demand | tab_downloads |
 | `staffing_gap_export` | DataFrame | tab_demand | tab_downloads |
 | `roster_scale` | float | tab_roster | tab_des |
+| `planning_projection` | DataFrame | tab_planning | tab_downloads |
+| `planning_hiring_plan` | DataFrame | tab_planning | tab_downloads |
+| `planning_required_fte` | DataFrame | tab_planning | tab_downloads |
 
 ### Adding a key for a new phase
 
@@ -122,6 +126,7 @@ imported with a try/except shim.
 | `tests/test_erlang.py` | Erlang C engine — 24 tests |
 | `tests/test_deterministic.py` | Deterministic staffing model — 15 tests |
 | `tests/test_staffing_solver.py` | Staffing solver (DES mocked) — 9 tests |
+| `tests/test_workforce_planner.py` | Phase 7 projection engine — 15 tests |
 
 Run locally:
 ```bash
@@ -180,8 +185,13 @@ accept DataFrames as arguments. Data loading and model computation happen in
 
 **Phase 7 uses a different time horizon than DES.** The intraday DES operates
 on 15-minute intervals within a day. Phase 7 attrition/hiring projections
-operate on weeks or months. These are separate execution paths — Phase 7 should
-not extend `des_runner.py` but introduce a new `planning/` module.
+operate on monthly periods. These are fully separate execution paths —
+`planning/workforce_planner.py` does not import or call `des_runner.py`.
+
+**`tab_planning.py` owns its own inputs.** Unlike other tabs that receive
+pre-computed DataFrames from `app.py`, the planning tab manages its own
+file uploaders and parameter widgets internally. The computed projection is
+stored in session state for `tab_downloads` to consume.
 
 ---
 
@@ -193,3 +203,5 @@ not extend `des_runner.py` but introduce a new `planning/` module.
 - No authentication (Phase 9).
 - `staffing_loader.py` uses `"staffing_interval_input"` as a placeholder `date_local`
   when only interval-indexed staffing is provided — downstream code guards for this.
+- Phase 7 attrition applies uniformly to all headcount including in-training and ramp
+  agents (known simplification; tenure-banded attrition is not modelled).

@@ -10,6 +10,7 @@ from ui.sidebar import render_sidebar
 from ui.tab_demand import render_demand_tab
 from ui.tab_des import render_des_tab
 from ui.tab_downloads import render_downloads_tab
+from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
 try:
@@ -47,11 +48,10 @@ def _init_session_state() -> None:
         # --- Phase 6: roster control (read cross-tab by tab_des) ---
         "roster_scale":            1.0,
 
-        # --- Phase 7: strategic workforce planning (reserved) ---
-        # "attrition_curve":         pd.DataFrame(),
-        # "hiring_plan":             pd.DataFrame(),
-        # "headcount_projection":    pd.DataFrame(),
-        # "training_ramp_data":      pd.DataFrame(),
+        # --- Phase 7: strategic workforce planning ---
+        "planning_projection":     pd.DataFrame(),
+        "planning_hiring_plan":    pd.DataFrame(),
+        "planning_required_fte":   pd.DataFrame(),
 
         # --- Phase 8: optimisation outputs (reserved) ---
         # "cost_model_output":       pd.DataFrame(),
@@ -153,6 +153,7 @@ tabs = st.tabs([
     "Roster + Gaps + Optimiser",
     "DES validation",
     "Scenario Compare",
+    "Workforce Planning",
     "Downloads",
 ])
 
@@ -168,4 +169,7 @@ with tabs[3]:
     render_scenarios_tab(df_inputs, cfg)
 
 with tabs[4]:
+    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+
+with tabs[5]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)
