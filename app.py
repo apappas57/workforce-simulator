@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 from config.sim_config import SimConfig
@@ -18,8 +19,54 @@ except ImportError:
     _staffing_loader_available = False
 
 
+def _init_session_state() -> None:
+    """Declare every session_state key used across the app with its default value.
+
+    This is the single source of truth for session state.  All tab modules may
+    write to these keys freely, but they must NOT introduce new keys without
+    first registering them here.
+
+    Convention:
+      - DataFrame outputs (summaries, exports) default to pd.DataFrame().
+      - Scalar controls default to their UI starting value.
+      - Phase 7+ keys are grouped at the bottom with a comment.
+
+    Adding a key for a new phase:
+      1. Add one line below in the appropriate phase section.
+      2. Never guard initialisation in a tab file with `if key not in session_state`
+         — rely on this function to do that once, cleanly.
+    """
+    _DEFAULTS: dict = {
+        # --- Phase 6: export summaries (consumed by tab_downloads) ---
+        "demand_daily_summary":    pd.DataFrame(),
+        "roster_daily_summary":    pd.DataFrame(),
+        "des_daily_summary":       pd.DataFrame(),
+        "staffing_daily_summary":  pd.DataFrame(),
+        "staffing_gap_export":     pd.DataFrame(),
+
+        # --- Phase 6: roster control (read cross-tab by tab_des) ---
+        "roster_scale":            1.0,
+
+        # --- Phase 7: strategic workforce planning (reserved) ---
+        # "attrition_curve":         pd.DataFrame(),
+        # "hiring_plan":             pd.DataFrame(),
+        # "headcount_projection":    pd.DataFrame(),
+        # "training_ramp_data":      pd.DataFrame(),
+
+        # --- Phase 8: optimisation outputs (reserved) ---
+        # "cost_model_output":       pd.DataFrame(),
+        # "hiring_recommendations":  pd.DataFrame(),
+    }
+
+    for key, default in _DEFAULTS.items():
+        if key not in st.session_state:
+            st.session_state[key] = default
+
+
 st.set_page_config(page_title="Call Centre Workforce Simulator", layout="wide")
 st.title("Call Centre Workforce Simulator — Interval Model + Erlang + Roster + DES")
+
+_init_session_state()
 
 sidebar_inputs = render_sidebar()
 

@@ -113,11 +113,6 @@ def _build_staffing_daily_summary(staffing_preview: pd.DataFrame) -> pd.DataFram
 
 def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
 
-    if "staffing_daily_summary" not in st.session_state:
-        st.session_state["staffing_daily_summary"] = pd.DataFrame()
-
-    if "staffing_gap_export" not in st.session_state:
-        st.session_state["staffing_gap_export"] = pd.DataFrame()
     st.subheader("Demand and requirements")
     
     if staffing_df is None or staffing_df.empty:

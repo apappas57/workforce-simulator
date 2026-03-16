@@ -85,9 +85,6 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
     st.subheader("Roster generator v3 + Gap analysis + Auto-scale optimiser (v0)")
 
 
-    if "roster_scale" not in st.session_state:
-        st.session_state["roster_scale"] = 1.0
-
     rg1, rg2, rg3 = st.columns(3)
     with rg1:
         stagger_strategy = st.selectbox("Break staggering", ["Even spread", "Random", "Front-loaded", "Back-loaded"], index=0)

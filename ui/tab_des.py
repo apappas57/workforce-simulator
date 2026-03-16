@@ -69,9 +69,6 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         help="DES v2 uses explicit queue, call lifecycle tracking, and improved occupancy calculation."
     )
 
-    if "roster_scale" not in st.session_state:
-        st.session_state["roster_scale"] = 1.0
-
     st.markdown("### Abandonment / Patience")
     enable_abandonment = st.toggle("Enable abandonment (patience)", value=True)
     patience_dist = st.selectbox("Patience distribution", ["exponential", "lognormal"], index=0)
@@ -287,6 +284,7 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         staffing_source_options.append("Generated roster")
     if has_staffing:
         staffing_source_options.append("Imported staffing availability")
+        staffing_source_options.append("Imported effective staffing availability")
     if has_roster and has_staffing:
         staffing_source_options.append("Tighter of the two")
 
@@ -312,8 +310,20 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         "DES staffing source",
         staffing_source_options,
         index=0,
-        help="Choose whether DES uses generated roster supply, imported staffing availability, or the tighter of the two.",
+        help="Choose whether DES uses generated roster supply, imported staffing availability, imported effective staffing availability, or the tighter of the two.",
     )
+
+    activity_shrinkage_pct = 0.0
+    if staffing_source == "Imported effective staffing availability":
+        activity_shrinkage_pct = st.slider(
+            "Imported staffing activity shrinkage %",
+            min_value=0.0,
+            max_value=0.6,
+            value=0.15,
+            step=0.01,
+            key="des_activity_shrinkage_pct",
+            help="Reduces imported staffing availability before DES capacity is built.",
+        )
 
     st.markdown("### Execution")
     run_des_now = st.toggle(
@@ -337,6 +347,7 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         roster_scale=effective_mult,
         staffing_df=staffing_df,
         staffing_source=staffing_source,
+        activity_shrinkage_pct=float(activity_shrinkage_pct),
     ).copy()
 
     p1, p2, p3 = st.columns(3)
@@ -409,6 +420,7 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
             break_schedule=break_schedule,
             staffing_df=staffing_df,
             staffing_source=staffing_source,
+            activity_shrinkage_pct=float(activity_shrinkage_pct),
         )
         validate_df = sim_run["validate_df"]
         sim_out = sim_run["sim_out"]

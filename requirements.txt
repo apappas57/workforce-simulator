@@ -1,0 +1,53 @@
+# Workforce Simulator — pinned dependencies
+# Generated from venv (Python 3.9) on 2026-03-16
+#
+# Direct project dependencies are marked with (direct).
+# All others are transitive dependencies of those packages.
+# To recreate the environment:
+#   python3.9 -m venv venv
+#   pip install -r requirements.txt
+
+# --- Core application (direct) ---
+streamlit==1.50.0          # (direct) UI framework
+pandas==2.3.3              # (direct) data manipulation
+numpy==2.0.2               # (direct) numerical computation
+plotly==6.6.0              # (direct) interactive charts
+pulp==3.3.0                # (direct) LP optimisation (shift optimiser)
+simpy==4.1.1               # (direct) discrete event simulation engine
+
+# --- Streamlit transitive dependencies ---
+altair==5.5.0
+blinker==1.9.0
+cachetools==6.2.6
+click==8.1.8
+gitdb==4.012
+gitpython==3.1.46
+jinja2==3.1.6
+markupsafe==3.0.3
+narwhals==2.17.0
+packaging==25.0
+pillow==11.3.0
+protobuf==6.33.5
+pyarrow==21.0.0
+pydeck==0.9.1
+tenacity==9.1.2
+toml==0.10.2
+tornado==6.5.4
+
+# --- Shared transitive dependencies ---
+attrs==25.4.0
+certifi==2026.2.25
+charset_normalizer==3.4.0
+idna==3.11
+jsonschema==4.25.1
+jsonschema_specifications==2025.9.1
+python_dateutil==2.9.0.post0
+pytz==2026.1.post1
+referencing==0.36.2
+requests==2.32.5
+rpds_py==0.27.1
+six==1.17.0
+smmap==5.0.2
+typing_extensions==4.15.0
+tzdata==2025.3
+urllib3==2.6.3
