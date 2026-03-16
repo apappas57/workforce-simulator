@@ -113,10 +113,17 @@ Applies scenario shocks to demand inputs and optionally runs the staffing solver
 ## Planning Layer (Phase 7)
 
 planning/workforce_planner.py
-Monthly workforce projection engine. Accepts PlanningParams and optional hiring/required-FTE DataFrames. Tracks cohort-based training and ramp states. Pure Python — no Streamlit dependency.
+Monthly workforce projection engine. Accepts PlanningParams and optional hiring/required-FTE DataFrames. Tracks cohort-based training and ramp states. Uses continuous geometric attrition decay. Pure Python — no Streamlit dependency.
 
 planning/hiring_loader.py
 CSV loaders for hiring_plan.csv and required_fte_plan.csv. Validates column presence, date parsing, no duplicates, and non-negative values.
+
+---
+
+## Optimisation Layer (Phase 8)
+
+optimisation/workforce_optimiser.py
+LP-based hiring optimisation engine. Accepts OptimisationParams and formulates a MILP using PuLP. Decision variables: integer hires per month, surplus and deficit auxiliaries. Available FTE expressed as a linear function of hire decisions using the same geometric decay and productivity multiplier as project_workforce(). Post-solve, project_workforce() is called with the optimal plan for the authoritative simulation output. Also provides optimise_scenarios() for attrition scenario comparison.
 
 ---
 
@@ -139,6 +146,9 @@ Scenario modelling interface.
 
 ui/tab_planning.py
 Strategic Workforce Planning tab (Phase 7). Owns its own file uploaders and planning parameter inputs. Writes planning_projection to session state.
+
+ui/tab_optimisation.py
+Hiring Optimisation tab (Phase 8). Owns its own parameter inputs and required FTE CSV uploader. Writes optimisation_result and optimisation_scenarios to session state.
 
 ui/tab_downloads.py
 Export utilities for CSV and ZIP outputs.
@@ -185,6 +195,12 @@ Required FTE plan CSV ingestion
 FTE capacity gap analysis (surplus/deficit)
 Workforce Planning tab
 Planning projection export
+LP-based optimal hiring plan generation (Phase 8)
+Cost modelling: hire cost, surplus carrying cost, deficit penalty
+Monthly hire capacity constraint
+Three-scenario attrition comparison (low / base / high)
+Hiring Optimisation tab
+Optimisation result and scenario comparison exports
 
 # Workforce Supply Capabilities
 
@@ -341,13 +357,14 @@ Multi-day forecasting not yet implemented.
 
 # Current Development Phase
 
-Phase 7 complete.
+Phase 8 complete.
 
-Next phase is Phase 8: Optimisation Engine.
+Next phase is Phase 9: Platform Development.
 
-Potential Phase 8 scope includes:
+Potential Phase 9 scope includes:
 
-cost modelling per FTE
-optimal hire timing to minimise surplus/deficit
-scenario comparison across hiring strategies
+persistent storage (database or file-backed state)
+user authentication
+deployment packaging
+multi-user session isolation
 

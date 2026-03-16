@@ -28,12 +28,14 @@ def render_downloads_tab(df_inputs, df_erlang, roster_df):
         "interval_results_det_erlang.csv": to_csv_bytes(df_erlang),
     }
 
-    demand_daily_summary = st.session_state.get("demand_daily_summary", pd.DataFrame())
-    roster_daily_summary = st.session_state.get("roster_daily_summary", pd.DataFrame())
-    des_daily_summary = st.session_state.get("des_daily_summary", pd.DataFrame())
+    demand_daily_summary  = st.session_state.get("demand_daily_summary",  pd.DataFrame())
+    roster_daily_summary  = st.session_state.get("roster_daily_summary",  pd.DataFrame())
+    des_daily_summary     = st.session_state.get("des_daily_summary",     pd.DataFrame())
     staffing_daily_summary = st.session_state.get("staffing_daily_summary", pd.DataFrame())
-    staffing_gap_export = st.session_state.get("staffing_gap_export", pd.DataFrame())
-    planning_projection = st.session_state.get("planning_projection", pd.DataFrame())
+    staffing_gap_export   = st.session_state.get("staffing_gap_export",   pd.DataFrame())
+    planning_projection   = st.session_state.get("planning_projection",   pd.DataFrame())
+    optimisation_result   = st.session_state.get("optimisation_result",   pd.DataFrame())
+    optimisation_scenarios = st.session_state.get("optimisation_scenarios", pd.DataFrame())
 
     if (
         demand_daily_summary.empty
@@ -42,6 +44,7 @@ def render_downloads_tab(df_inputs, df_erlang, roster_df):
         and staffing_daily_summary.empty
         and staffing_gap_export.empty
         and planning_projection.empty
+        and optimisation_result.empty
     ):
         st.info("Daily summary exports will appear after the relevant tabs have been opened and summaries have been generated.")
 
@@ -103,6 +106,27 @@ def render_downloads_tab(df_inputs, df_erlang, roster_df):
             mime="text/csv",
         )
         pack["planning_projection.csv"] = to_csv_bytes(planning_export)
+
+    if isinstance(optimisation_result, pd.DataFrame) and not optimisation_result.empty:
+        opt_export = optimisation_result.copy()
+        if "period_start" in opt_export.columns:
+            opt_export["period_start"] = opt_export["period_start"].dt.strftime("%Y-%m-%d")
+        st.download_button(
+            "Download optimal hiring plan CSV",
+            data=to_csv_bytes(opt_export),
+            file_name="optimisation_result.csv",
+            mime="text/csv",
+        )
+        pack["optimisation_result.csv"] = to_csv_bytes(opt_export)
+
+    if isinstance(optimisation_scenarios, pd.DataFrame) and not optimisation_scenarios.empty:
+        st.download_button(
+            "Download scenario comparison CSV",
+            data=to_csv_bytes(optimisation_scenarios),
+            file_name="optimisation_scenarios.csv",
+            mime="text/csv",
+        )
+        pack["optimisation_scenarios.csv"] = to_csv_bytes(optimisation_scenarios)
 
     if roster_df is not None and not roster_df.empty:
         roster_curve_cols = ["interval", "roster_net_agents"]

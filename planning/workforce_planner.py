@@ -178,11 +178,15 @@ def project_workforce(
         # 1. Opening headcount (sum of all surviving cohort members)
         opening_hc = sum(c[0] for c in cohorts)
 
-        # 2. Apply proportional attrition
-        attrition_count = math.floor(opening_hc * attrition_rate)
-        attrition_count = min(attrition_count, math.floor(opening_hc))  # safety clamp
+        # 2. Apply continuous proportional attrition.
+        #    Each cohort shrinks by (1 - attrition_rate) each period.
+        #    Using the continuous form (no math.floor) keeps the simulation
+        #    mathematically consistent with the LP optimiser in Phase 8, which
+        #    expresses available_fte as a linear function of hire decisions using
+        #    the same geometric decay: cohort_size × (1 - a)^elapsed.
+        attrition_count = opening_hc * attrition_rate
+        surviving_fraction = max(0.0, 1.0 - attrition_rate)
         if opening_hc > 0 and attrition_count > 0:
-            surviving_fraction = max(0.0, 1.0 - (attrition_count / opening_hc))
             for c in cohorts:
                 c[0] *= surviving_fraction
 
@@ -224,7 +228,7 @@ def project_workforce(
             "period_start":         period_ts,
             "period_label":         period_label,
             "opening_headcount":    int(round(opening_hc)),
-            "attrition":            attrition_count,
+            "attrition":            round(attrition_count, 1),
             "new_hires":            new_hires,
             "in_training":          round(in_training, 1),
             "in_ramp":              round(in_ramp, 1),

@@ -10,6 +10,7 @@ from ui.sidebar import render_sidebar
 from ui.tab_demand import render_demand_tab
 from ui.tab_des import render_des_tab
 from ui.tab_downloads import render_downloads_tab
+from ui.tab_optimisation import render_optimisation_tab
 from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
@@ -53,9 +54,9 @@ def _init_session_state() -> None:
         "planning_hiring_plan":    pd.DataFrame(),
         "planning_required_fte":   pd.DataFrame(),
 
-        # --- Phase 8: optimisation outputs (reserved) ---
-        # "cost_model_output":       pd.DataFrame(),
-        # "hiring_recommendations":  pd.DataFrame(),
+        # --- Phase 8: optimisation outputs ---
+        "optimisation_result":     pd.DataFrame(),
+        "optimisation_scenarios":  pd.DataFrame(),
     }
 
     for key, default in _DEFAULTS.items():
@@ -154,6 +155,7 @@ tabs = st.tabs([
     "DES validation",
     "Scenario Compare",
     "Workforce Planning",
+    "Hiring Optimisation",
     "Downloads",
 ])
 
@@ -172,4 +174,7 @@ with tabs[4]:
     render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[5]:
+    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+
+with tabs[6]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)

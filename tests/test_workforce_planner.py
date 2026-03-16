@@ -122,7 +122,11 @@ def test_attrition_reduces_headcount():
 
 
 def test_headcount_flow_identity():
-    """closing_headcount == opening_headcount - attrition + new_hires (within rounding)."""
+    """closing_headcount == opening_headcount - attrition + new_hires (within rounding).
+
+    Attrition is continuous (floating-point), so we compare rounded closing
+    against the rounded expected value with a tolerance of 1.
+    """
     p = _params(
         opening_headcount=100,
         monthly_attrition_rate_pct=5.0,
@@ -132,6 +136,8 @@ def test_headcount_flow_identity():
     df = project_workforce(p, hiring_plan_df=hiring)
 
     for _, row in df.iterrows():
+        # With continuous attrition, attrition is a float; identity holds exactly
+        # before rounding so we allow ±1 after int(round(...)) display rounding.
         expected_closing = row["opening_headcount"] - row["attrition"] + row["new_hires"]
         assert abs(row["closing_headcount"] - round(expected_closing)) <= 1, (
             f"Flow identity failed for {row['period_label']}: "

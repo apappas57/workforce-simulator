@@ -1,5 +1,109 @@
 # Changelog
-## 2026-03-16
+## 2026-03-16 (Phase 8)
+
+### Fixed
+Continuous attrition in project_workforce() for LP consistency.
+
+project_workforce() previously used math.floor(hc × rate) for attrition, while
+the Phase 8 LP optimiser expresses available_fte as a linear function using
+geometric decay: cohort_size × (1 - a)^elapsed. The floor was removed so both
+engines use the same continuous formula. Attrition column is now a float (1dp).
+All 15 Phase 7 tests continue to pass.
+
+---
+
+### Added
+LP-based hiring optimiser (optimisation/workforce_optimiser.py).
+
+OptimisationParams dataclass added with fields:
+
+- planning: PlanningParams (reuses Phase 7 projection parameters)
+- required_fte_df: DataFrame with monthly FTE targets
+- cost_per_hire: one-off cost per new hire
+- cost_per_surplus_fte_month: cost of carrying excess FTE
+- cost_per_deficit_fte_month: penalty for understaffing
+- max_hires_per_month: hard hiring capacity constraint
+
+optimise_hiring_plan() formulates and solves a MILP using PuLP:
+
+- Decision variables: integer hires per month, surplus and deficit auxiliaries
+- Available FTE expressed as a linear function of hire decisions using the same
+  geometric decay and productivity multiplier as project_workforce()
+- Post-solve, project_workforce() is called with the optimal plan to produce
+  the authoritative simulation output (consistent rounding, cohort tracking)
+
+optimise_scenarios() runs the optimiser under low / base / high attrition rates
+(base ± configurable variance in pp) and returns a comparison DataFrame.
+
+---
+
+### Added
+Hiring Optimisation tab (ui/tab_optimisation.py).
+
+New tab added between Workforce Planning and Downloads:
+
+- Workforce parameter inputs (independent from planning tab)
+- Cost and constraint parameters: cost per hire, surplus cost, deficit cost,
+  max hires per month
+- Scenario variance input (±pp from base attrition)
+- Required FTE plan CSV uploader (required to run optimiser)
+- Summary metrics: total hires, total cost, cost breakdown, months in deficit
+- Four charts: optimal hiring plan, available vs required FTE, cost breakdown
+  by period, scenario comparison (hires + cost dual-axis)
+- Scenario comparison table
+- Period detail data table
+
+---
+
+### Added
+Phase 8 session state keys registered in app.py:
+
+- optimisation_result (DataFrame)
+- optimisation_scenarios (DataFrame)
+
+---
+
+### Added
+Optimisation exports in Downloads tab.
+
+- optimisation_result.csv
+- optimisation_scenarios.csv
+
+Both added to individual download buttons and included in the ZIP pack.
+
+---
+
+### Added
+Test suite for optimisation engine (tests/test_workforce_optimiser.py).
+
+12 unit tests covering:
+
+- Optimal solver status for feasible problem
+- Output column presence
+- One row per planning period
+- Zero opening headcount forces hires when FTE target exists
+- Hire cap respected: optimal_hires never exceeds max_hires_per_month
+- No hires recommended when existing surplus makes hiring uneconomical
+- Total cost equals sum of component costs
+- High deficit penalty drives more hiring
+- Scenario comparison returns three rows
+- Scenario attrition rates correctly offset from base
+- High attrition scenario requires >= hires vs low attrition
+- Cap=0 handled gracefully
+
+---
+
+### Impact
+The simulator now supports:
+
+- Cost-optimal hiring plan generation across a planning horizon
+- Per-month hiring capacity constraints
+- Scenario robustness analysis under attrition uncertainty
+- Export of optimal plans and scenario comparisons
+
+---
+
+## 2026-03-16 (Phase 7)
 
 ### Added
 Phase 7 strategic workforce planning foundation.

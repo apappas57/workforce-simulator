@@ -28,13 +28,18 @@ Simulation design notes: see DES_NOTES.md
 | 5 | Multi-day simulation | ✅ Complete |
 | 6 | Workforce supply model | ✅ Complete |
 | 7 | Strategic workforce planning | ✅ Complete |
-| 8 | Optimisation engine | 🔜 Next |
-| 9 | Platform development | ⬜ Pending |
+| 8 | Optimisation engine | ✅ Complete |
+| 9 | Platform development | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
 plan CSV, capacity gap analysis (surplus/deficit), Workforce Planning tab,
 planning_projection export. 15 unit tests added.
+
+Phase 8 delivered: LP-based hiring optimiser (PuLP MILP), cost model (hire /
+surplus / deficit costs), monthly hire cap constraint, three-scenario attrition
+comparison, Hiring Optimisation tab, optimisation exports. 12 unit tests added.
+Continuous attrition fix applied to project_workforce() for LP consistency.
 
 ---
 
@@ -73,9 +78,11 @@ Demand Input
 | `analysis/scenario_runner.py` | Scenario shock application |
 | `planning/workforce_planner.py` | **Phase 7 projection engine** — PlanningParams dataclass + project_workforce() |
 | `planning/hiring_loader.py` | Loaders for hiring_plan.csv and required_fte_plan.csv |
+| `optimisation/workforce_optimiser.py` | **Phase 8 LP engine** — OptimisationParams + optimise_hiring_plan() + optimise_scenarios() |
 | `ui/sidebar.py` | Global sidebar — returns dict of all inputs |
 | `ui/tab_*.py` | One file per tab; tabs are rendered in app.py |
 | `ui/tab_planning.py` | Workforce Planning tab (Phase 7) |
+| `ui/tab_optimisation.py` | Hiring Optimisation tab (Phase 8) |
 | `ui/date_view.py` | Shared date/interval view helpers + `ensure_x_col` |
 | `utils/export.py` | CSV + ZIP export generation |
 
@@ -103,6 +110,8 @@ instead.
 | `planning_projection` | DataFrame | tab_planning | tab_downloads |
 | `planning_hiring_plan` | DataFrame | tab_planning | tab_downloads |
 | `planning_required_fte` | DataFrame | tab_planning | tab_downloads |
+| `optimisation_result` | DataFrame | tab_optimisation | tab_downloads |
+| `optimisation_scenarios` | DataFrame | tab_optimisation | tab_downloads |
 
 ### Adding a key for a new phase
 
@@ -127,6 +136,7 @@ imported with a try/except shim.
 | `tests/test_deterministic.py` | Deterministic staffing model — 15 tests |
 | `tests/test_staffing_solver.py` | Staffing solver (DES mocked) — 9 tests |
 | `tests/test_workforce_planner.py` | Phase 7 projection engine — 15 tests |
+| `tests/test_workforce_optimiser.py` | Phase 8 LP optimiser — 12 tests (requires pulp) |
 
 Run locally:
 ```bash
@@ -188,10 +198,16 @@ on 15-minute intervals within a day. Phase 7 attrition/hiring projections
 operate on monthly periods. These are fully separate execution paths —
 `planning/workforce_planner.py` does not import or call `des_runner.py`.
 
-**`tab_planning.py` owns its own inputs.** Unlike other tabs that receive
-pre-computed DataFrames from `app.py`, the planning tab manages its own
-file uploaders and parameter widgets internally. The computed projection is
-stored in session state for `tab_downloads` to consume.
+**`tab_planning.py` and `tab_optimisation.py` own their own inputs.** Unlike
+other tabs that receive pre-computed DataFrames from `app.py`, these tabs manage
+their own file uploaders and parameter widgets internally. Results are stored in
+session state for `tab_downloads` to consume.
+
+**The LP optimiser and project_workforce() use the same attrition model.**
+Both use continuous geometric decay: `cohort_size × (1 - attrition_rate)^elapsed`.
+`project_workforce()` was updated in Phase 8 to drop `math.floor` rounding so the
+simulation result is consistent with the LP's internal FTE calculation. Any future
+change to attrition modelling must keep both in sync.
 
 ---
 
@@ -203,5 +219,7 @@ stored in session state for `tab_downloads` to consume.
 - No authentication (Phase 9).
 - `staffing_loader.py` uses `"staffing_interval_input"` as a placeholder `date_local`
   when only interval-indexed staffing is provided — downstream code guards for this.
-- Phase 7 attrition applies uniformly to all headcount including in-training and ramp
-  agents (known simplification; tenure-banded attrition is not modelled).
+- Attrition applies uniformly to all headcount including in-training and ramp agents
+  (known simplification; tenure-banded attrition is not modelled).
+- LP optimiser uses continuous relaxation for available_fte then rounds h[t] to
+  integer hires; post-solve project_workforce() run is the authoritative output.
