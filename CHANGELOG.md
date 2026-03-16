@@ -1,4 +1,29 @@
 # Changelog
+## 2026-03-16 (Phase 9)
+
+### Added
+File-based persistence layer (persistence/state_manager.py).
+
+Sidebar, planning tab, and optimisation tab widget values are now saved to
+state/settings.json after every run and restored on app reload. No more
+re-entering parameters after a browser refresh.
+
+Computed DataFrames (planning_projection, planning_hiring_plan,
+planning_required_fte, optimisation_result, optimisation_scenarios) are saved
+to state/{key}.parquet after each successful run and reloaded on startup.
+
+Persistence is best-effort and silent — the app is fully functional without the
+state/ directory, which is git-ignored.
+
+All sidebar widgets now carry key="sb_*" session state keys. _init_session_state()
+pre-populates these from disk so Streamlit picks them up before any widget renders.
+
+20 unit tests added (tests/test_state_manager.py). Parquet roundtrip test skips
+gracefully when pyarrow is not present (pyarrow is a Streamlit transitive dep and
+will be available in any normal install).
+
+---
+
 ## 2026-03-16 (Phase 8)
 
 ### Fixed

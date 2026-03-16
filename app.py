@@ -6,6 +6,7 @@ from config.sim_config import SimConfig
 from demand.demand_loader import build_synthetic_day, load_demand_csv, validate_demand
 from models.deterministic import deterministic_staffing
 from models.erlang import solve_staffing_erlang
+from persistence import state_manager
 from ui.sidebar import render_sidebar
 from ui.tab_demand import render_demand_tab
 from ui.tab_des import render_des_tab
@@ -32,6 +33,8 @@ def _init_session_state() -> None:
       - DataFrame outputs (summaries, exports) default to pd.DataFrame().
       - Scalar controls default to their UI starting value.
       - Phase 7+ keys are grouped at the bottom with a comment.
+      - Phase 9: widget keys (sb_*, planning_*, opt_*) are pre-populated from
+        disk via state_manager so Streamlit widgets pick up saved values.
 
     Adding a key for a new phase:
       1. Add one line below in the appropriate phase section.
@@ -63,6 +66,19 @@ def _init_session_state() -> None:
         if key not in st.session_state:
             st.session_state[key] = default
 
+    # --- Phase 9: load persisted settings and widget state from disk ---
+    # load_settings() merges saved values over defaults; load_dataframes()
+    # restores previously computed results so they appear on reload.
+    saved_settings = state_manager.load_settings()
+    for key, value in saved_settings.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+    saved_dfs = state_manager.load_dataframes()
+    for key, df in saved_dfs.items():
+        if key not in st.session_state:
+            st.session_state[key] = df
+
 
 st.set_page_config(page_title="Call Centre Workforce Simulator", layout="wide")
 st.title("Call Centre Workforce Simulator — Interval Model + Erlang + Roster + DES")
@@ -80,6 +96,9 @@ cfg = SimConfig(
     sl_target=sidebar_inputs["sl_target"],
     seed=sidebar_inputs["seed"],
 )
+
+# Phase 9: persist sidebar settings after every render (fast JSON write).
+state_manager.save_settings(st.session_state)
 
 try:
     if sidebar_inputs["use_synth"]:

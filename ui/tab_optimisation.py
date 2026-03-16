@@ -16,6 +16,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from persistence import state_manager
 from planning.workforce_planner import PlanningParams
 from planning.hiring_loader import load_required_fte_plan
 from optimisation.workforce_optimiser import (
@@ -327,6 +328,11 @@ def render_optimisation_tab(shrinkage_pct: float) -> None:
         scenario_df = optimise_scenarios(opt_params, float(attrition_variance))
 
     st.session_state["optimisation_scenarios"] = scenario_df
+
+    # Phase 9: persist results and current widget values to disk
+    state_manager.save_dataframe("optimisation_result", result_df)
+    state_manager.save_dataframe("optimisation_scenarios", scenario_df)
+    state_manager.save_settings(st.session_state)
 
     # -------------------------------------------------------------------
     # Summary metrics

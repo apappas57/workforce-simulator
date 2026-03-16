@@ -43,6 +43,9 @@ Thumbs.db
 tmp/
 temp/
 
+# Phase 9: persisted state (local to machine, not for version control)
+state/
+
 # Build artifacts
 build/
 dist/

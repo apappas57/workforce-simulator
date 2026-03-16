@@ -23,6 +23,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from persistence import state_manager
 from planning.workforce_planner import PlanningParams, project_workforce
 
 try:
@@ -338,6 +339,14 @@ def render_planning_tab(shrinkage_pct: float) -> None:
         st.session_state["planning_hiring_plan"] = hiring_df
     if req_fte_df is not None:
         st.session_state["planning_required_fte"] = req_fte_df
+
+    # Phase 9: persist results and current widget values to disk
+    state_manager.save_dataframe("planning_projection", projection)
+    if hiring_df is not None:
+        state_manager.save_dataframe("planning_hiring_plan", hiring_df)
+    if req_fte_df is not None:
+        state_manager.save_dataframe("planning_required_fte", req_fte_df)
+    state_manager.save_settings(st.session_state)
 
     # -----------------------------------------------------------------------
     # Summary metrics

@@ -29,7 +29,8 @@ Simulation design notes: see DES_NOTES.md
 | 6 | Workforce supply model | ✅ Complete |
 | 7 | Strategic workforce planning | ✅ Complete |
 | 8 | Optimisation engine | ✅ Complete |
-| 9 | Platform development | 🔜 Next |
+| 9 | Platform development | 🔄 In progress |
+| 10 | Authentication + deployment | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -40,6 +41,12 @@ Phase 8 delivered: LP-based hiring optimiser (PuLP MILP), cost model (hire /
 surplus / deficit costs), monthly hire cap constraint, three-scenario attrition
 comparison, Hiring Optimisation tab, optimisation exports. 12 unit tests added.
 Continuous attrition fix applied to project_workforce() for LP consistency.
+
+Phase 9 (persistent state) delivered: file-based persistence layer
+(persistence/state_manager.py). Sidebar, planning, and optimisation widget
+values saved to state/settings.json on every run and restored on reload.
+Computed DataFrames (planning_projection, optimisation_result, etc.) saved as
+Parquet in state/ after each run. 20 unit tests added. state/ is git-ignored.
 
 ---
 
@@ -79,6 +86,7 @@ Demand Input
 | `planning/workforce_planner.py` | **Phase 7 projection engine** — PlanningParams dataclass + project_workforce() |
 | `planning/hiring_loader.py` | Loaders for hiring_plan.csv and required_fte_plan.csv |
 | `optimisation/workforce_optimiser.py` | **Phase 8 LP engine** — OptimisationParams + optimise_hiring_plan() + optimise_scenarios() |
+| `persistence/state_manager.py` | **Phase 9 persistence** — load_settings(), save_settings(), save_dataframe(), load_dataframes() |
 | `ui/sidebar.py` | Global sidebar — returns dict of all inputs |
 | `ui/tab_*.py` | One file per tab; tabs are rendered in app.py |
 | `ui/tab_planning.py` | Workforce Planning tab (Phase 7) |
@@ -137,6 +145,7 @@ imported with a try/except shim.
 | `tests/test_staffing_solver.py` | Staffing solver (DES mocked) — 9 tests |
 | `tests/test_workforce_planner.py` | Phase 7 projection engine — 15 tests |
 | `tests/test_workforce_optimiser.py` | Phase 8 LP optimiser — 12 tests (requires pulp) |
+| `tests/test_state_manager.py` | Phase 9 persistence layer — 20 tests (parquet test skipped without pyarrow) |
 
 Run locally:
 ```bash
@@ -209,14 +218,29 @@ Both use continuous geometric decay: `cohort_size × (1 - attrition_rate)^elapse
 simulation result is consistent with the LP's internal FTE calculation. Any future
 change to attrition modelling must keep both in sync.
 
+**Phase 9 persistence layer is best-effort and silent.** `state_manager` catches
+all IO exceptions and logs warnings — it never raises. The app is fully functional
+without the state/ directory. If state appears stale or corrupt, delete state/ and
+the app will rebuild it from defaults on the next run.
+
+**Sidebar widgets use `sb_` prefixed session state keys.** All sidebar widgets
+now carry `key="sb_*"`. `_init_session_state()` pre-populates these from
+`state_manager.load_settings()` before widgets render. The return dict from
+`render_sidebar()` reads from `st.session_state[key]` — do not add a `value=`
+path that bypasses this.
+
+**Widget state keys are the persistence keys.** The `key=` argument on every
+planning and optimisation tab widget matches the key in `_DEFAULT_SETTINGS` in
+`state_manager.py`. If a widget key is renamed in a tab, the corresponding
+entry in `_DEFAULT_SETTINGS` must be updated to match.
+
 ---
 
 ## Known limitations (current)
 
 - Shrinkage is a static factor; activity-based dynamic shrinkage is pending (Phase 6 remainder).
 - Scenario output comparison visuals are early-stage.
-- No persistent storage; all state resets on app reload (Phase 9).
-- No authentication (Phase 9).
+- No authentication (Phase 10).
 - `staffing_loader.py` uses `"staffing_interval_input"` as a placeholder `date_local`
   when only interval-indexed staffing is provided — downstream code guards for this.
 - Attrition applies uniformly to all headcount including in-training and ramp agents
