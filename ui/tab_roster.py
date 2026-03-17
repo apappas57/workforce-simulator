@@ -164,7 +164,7 @@ def _render_shift_gantt(
             name="Roster (net)",
             line=dict(color=_SHIFT_COLOURS[0], width=2),
             fill="tozeroy",
-            fillcolor=_SHIFT_COLOURS[0] + "18",
+            fillcolor="rgba(99,102,241,0.09)",
         ))
 
     fig2.update_layout(

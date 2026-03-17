@@ -16,6 +16,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 
+def _hex_to_rgba(hex_colour: str, alpha: float) -> str:
+    """Convert a 6-char hex colour to an rgba() string Plotly accepts."""
+    h = hex_colour.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
 # ── Colour palette (matches global CSS) ───────────────────────────────────────
 _INDIGO   = "#6366F1"
 _INDIGO_L = "#818CF8"
@@ -61,7 +68,7 @@ def _sparkline(x, y, colour: str, title: str, yformat: str = "") -> go.Figure:
         mode="lines",
         line=dict(color=colour, width=2),
         fill="tozeroy",
-        fillcolor=colour.replace(")", ", 0.12)").replace("rgb", "rgba") if colour.startswith("rgb") else colour + "20",
+        fillcolor=_hex_to_rgba(colour, 0.12),
     ))
     fig.update_layout(
         title=dict(text=title, font=dict(size=12, color=_MUTED), x=0, pad=dict(l=4)),
