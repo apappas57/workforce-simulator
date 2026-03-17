@@ -12,9 +12,10 @@ ENV/
 # Streamlit secrets
 .streamlit/secrets.toml
 
-# Env files
+# Env files — commit .env.example (template), ignore everything else
 .env
-.env.*
+.env.local
+.env.*.local
 
 # Python caches / test
 .pytest_cache/

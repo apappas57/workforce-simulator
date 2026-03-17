@@ -10,8 +10,8 @@ phase completes or a new convention is established.
 
 A call centre workforce simulation and planning tool built in Python + Streamlit.
 Models demand, staffing, queue behaviour, and workforce supply to support
-operational and strategic workforce decisions. Personal project, currently
-pre-deployment, running locally.
+operational and strategic workforce decisions. Personal project; deployable via
+Docker locally or to Railway / Render (see render.yaml / railway.toml).
 
 Full capability overview: see PROJECT_STATE.md
 Change history: see CHANGELOG.md
@@ -43,7 +43,23 @@ Simulation design notes: see DES_NOTES.md
 | 20 | Caching layer | ✅ Complete |
 | 21 | Chart consistency pass | ✅ Complete |
 | 22 | Quick Erlang C calculator | ✅ Complete |
-| 23 | — | 🔜 Next |
+| 23 | Deployment hardening | ✅ Complete |
+| 24 | — | 🔜 Next |
+
+Phase 23 (deployment hardening) delivered: end-to-end cloud deployment support
+for Railway and Render. `render.yaml` and `railway.toml` platform config files
+added. `app.py` extended with `_resolve_credentials_path()` — checks for
+`auth/credentials.yaml` on disk first; falls back to `CREDENTIALS_YAML_B64` env
+var (base64-encoded YAML) for cloud deployments where file mounts are unavailable.
+Decoded file written once to `/tmp/wfsim_credentials.yaml` per container lifetime.
+`Dockerfile` updated: `curl` installed via apt for the HEALTHCHECK, `mkdir -p
+state configs` ensures writable directories exist in the image even without volume
+mounts, `start-period` bumped to 30 s to give the app time to initialise before
+first health probe. `docker-compose.yml` adds `./configs:/app/configs` volume mount
+so named config snapshots survive container rebuilds. `.env.example` updated with
+`CREDENTIALS_YAML_B64` variable and generation instructions. README updated with
+Option C (Render) and Option D (Railway) deployment sections. Local Docker and
+local Python flows are completely unchanged.
 
 Phase 22 (quick Erlang C calculator) delivered: `ui/tab_quickcalc.py` —
 self-contained single-interval calculator tab (no sidebar dependency, no CSV
@@ -229,6 +245,8 @@ Demand Input
 | `ui/charts.py` | **Phase 21 chart utilities** — `apply_dark_theme()`, `PALETTE`, semantic colour constants |
 | `ui/tab_quickcalc.py` | **Phase 22 quick calculator** — self-contained single-interval Erlang C calculator |
 | `ui/tab_overview.py` | **Phase 18 overview dashboard** — read-only KPI landing tab |
+| `render.yaml` | **Phase 23** — Render.com deployment blueprint (Docker, persistent disk, env vars) |
+| `railway.toml` | **Phase 23** — Railway deployment config (Dockerfile build, healthcheck, restart policy) |
 | `utils/export.py` | CSV + ZIP export generation |
 | `utils/excel_export.py` | **Phase 17 Excel engine** — build_simulation_workbook() → formatted .xlsx bytes |
 | `persistence/config_store.py` | **Phase 16 config store** — save/load/delete named sb_* snapshots in configs/ |

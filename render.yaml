@@ -1,0 +1,37 @@
+# render.yaml — Render.com deployment configuration
+#
+# Deploy to Render:
+#   1. Push this repo to GitHub (public or connected private repo)
+#   2. In Render dashboard → New → Blueprint → select this repo
+#   3. Set the two environment variables marked sync:false (see below)
+#   4. Click "Apply" — Render builds the Docker image and starts the service
+#
+# Credentials setup for Render:
+#   Generate CREDENTIALS_YAML_B64 locally:
+#     base64 -i auth/credentials.yaml | tr -d '\n'   # macOS / Linux
+#   Paste the output as the CREDENTIALS_YAML_B64 environment variable value.
+#
+# State persistence:
+#   The 1 GB disk below is mounted at /app/state.  Simulation state survives
+#   redeploys.  Named config snapshots (configs/) are ephemeral on Render
+#   (no second mount); they reset on each deploy.  This is a known limitation.
+
+services:
+  - type: web
+    name: workforce-simulator
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Render free tier has 512 MB RAM — the starter plan (512 MB) is the minimum.
+    # For full DES runs with large datasets, the standard plan (2 GB) is recommended.
+    plan: starter
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: DEPLOYMENT_KEY
+        sync: false   # set manually in Render dashboard — never stored in this file
+      - key: CREDENTIALS_YAML_B64
+        sync: false   # set manually in Render dashboard — base64-encoded credentials.yaml
+    disk:
+      name: app-state
+      mountPath: /app/state
+      sizeGB: 1

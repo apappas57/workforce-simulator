@@ -121,7 +121,59 @@ docker-compose up --build
 
 Open [http://localhost:8501](http://localhost:8501). The app will restart automatically if the container is rebooted (`restart: unless-stopped`).
 
-Simulation state is persisted to `./state/` on the host and survives container rebuilds. Credentials are mounted read-only and never baked into the image.
+Simulation state is persisted to `./state/` on the host and survives container rebuilds. Named config snapshots are persisted to `./configs/`. Credentials are mounted read-only and never baked into the image.
+
+---
+
+### Option C — Render (cloud, one-click from GitHub)
+
+**1. Push the repo to GitHub.**
+
+**2. In the Render dashboard** → New → Blueprint → connect the repo.
+Render detects `render.yaml` automatically and creates the web service with a 1 GB persistent disk at `/app/state`.
+
+**3. Set environment variables** in the service settings:
+
+| Variable | Value |
+|---|---|
+| `DEPLOYMENT_KEY` | Your signed deployment key |
+| `CREDENTIALS_YAML_B64` | Base64-encoded `credentials.yaml` (see below) |
+
+**4. Generate `CREDENTIALS_YAML_B64`** from your local credentials file:
+
+```bash
+# macOS / Linux
+base64 -i auth/credentials.yaml | tr -d '\n'
+
+# Python (any platform)
+python -c "import base64, pathlib; \
+  print(base64.b64encode(pathlib.Path('auth/credentials.yaml').read_bytes()).decode())"
+```
+
+Paste the output as the `CREDENTIALS_YAML_B64` value. No file mount required.
+
+**5. Click "Apply".** Render builds the Docker image and starts the service.
+
+---
+
+### Option D — Railway (cloud, one-click from GitHub)
+
+**1. Push the repo to GitHub.**
+
+**2. In the Railway dashboard** → New Project → Deploy from GitHub repo.
+Railway auto-detects the Dockerfile and builds the image using `railway.toml`.
+
+**3. Add environment variables** in the service Variables tab:
+
+| Variable | Value |
+|---|---|
+| `DEPLOYMENT_KEY` | Your signed deployment key |
+| `CREDENTIALS_YAML_B64` | Base64-encoded `credentials.yaml` (see Render step 4) |
+
+**4. Add a volume** in the service settings:
+- Mount path: `/app/state` — persists simulation state across redeploys.
+
+**5. Railway will redeploy automatically** on every push to the connected branch.
 
 ---
 

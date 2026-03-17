@@ -1,7 +1,8 @@
 # Workforce Simulator — docker-compose.yml
 #
 # Quick start:
-#   1. cp .env.example .env           — fill in DEPLOYMENT_KEY
+#   1. cp .env.example .env           — fill in DEPLOYMENT_KEY (and optionally
+#                                        CREDENTIALS_YAML_B64 instead of step 2)
 #   2. cp auth/credentials.yaml.example auth/credentials.yaml
 #                                     — add users and set cookie key
 #   3. docker-compose up --build
@@ -24,7 +25,12 @@ services:
       # Persist simulation state across container restarts
       - ./state:/app/state
 
-      # Mount credentials at runtime — never bake them into the image
+      # Persist named config snapshots across container restarts
+      - ./configs:/app/configs
+
+      # Mount credentials at runtime — never bake them into the image.
+      # For cloud deployments without file mounts, use CREDENTIALS_YAML_B64 in .env
+      # and remove (or comment out) this line.
       - ./auth/credentials.yaml:/app/auth/credentials.yaml:ro
 
     restart: unless-stopped

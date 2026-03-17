@@ -1,0 +1,28 @@
+# railway.toml — Railway deployment configuration
+#
+# Deploy to Railway:
+#   1. Push this repo to GitHub
+#   2. In Railway dashboard → New Project → Deploy from GitHub repo
+#   3. Railway auto-detects the Dockerfile and builds the image
+#   4. Add environment variables in the service settings:
+#        DEPLOYMENT_KEY      — your signed deployment key
+#        CREDENTIALS_YAML_B64 — base64-encoded credentials.yaml content
+#   5. Add a volume in the service settings:
+#        Mount path: /app/state   — persists simulation state across redeploys
+#
+# Credentials setup for Railway:
+#   Generate CREDENTIALS_YAML_B64 locally:
+#     base64 -i auth/credentials.yaml | tr -d '\n'   # macOS / Linux
+#   Paste the output in Railway's service Variables tab.
+#
+# Named config snapshots (configs/) are ephemeral on Railway unless you add a
+# second volume mount at /app/configs.
+
+[build]
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/_stcore/health"
+healthcheckTimeout = 60
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 3

@@ -486,19 +486,52 @@ def _gate_deployment_key() -> None:
 # Phase 10: Login screen
 # ---------------------------------------------------------------------------
 
+def _resolve_credentials_path() -> "Path | None":
+    """Return the path to a usable credentials.yaml, or None if not configured.
+
+    Resolution order
+    ----------------
+    1. ``auth/credentials.yaml`` on disk  — local dev / Docker volume mount.
+    2. ``CREDENTIALS_YAML_B64`` env var   — base64-encoded YAML content, for
+       cloud deployments (Railway, Render) where volume mounts are unavailable.
+       The decoded file is written once to ``/tmp/wfsim_credentials.yaml`` and
+       reused for the lifetime of the container process.
+    3. ``None``                            — no credentials configured; the app
+       allows unrestricted access (development mode).
+    """
+    # 1. Local file
+    local = Path(__file__).parent / "auth" / "credentials.yaml"
+    if local.exists():
+        return local
+
+    # 2. Env-var base64 payload
+    b64 = os.environ.get("CREDENTIALS_YAML_B64", "").strip()
+    if b64:
+        import base64 as _b64
+        import tempfile
+        tmp = Path(tempfile.gettempdir()) / "wfsim_credentials.yaml"
+        # Only decode once per container lifetime (content never changes at runtime).
+        if not tmp.exists():
+            tmp.write_bytes(_b64.b64decode(b64))
+        return tmp
+
+    # 3. Not configured
+    return None
+
+
 def _gate_login() -> None:
     """Render the login screen and halt until the user authenticates.
 
-    Reads credentials from auth/credentials.yaml. Skipped gracefully if
-    streamlit-authenticator is not installed or credentials.yaml does not exist
-    (local dev without auth configured).
+    Reads credentials from auth/credentials.yaml (or CREDENTIALS_YAML_B64 env
+    var for cloud deployments). Skipped gracefully if streamlit-authenticator
+    is not installed or no credentials source is available (local dev mode).
     """
     if not _stauth_available:
         return  # streamlit-authenticator not installed — allow access
 
-    creds_path = Path(__file__).parent / "auth" / "credentials.yaml"
-    if not creds_path.exists():
-        # credentials.yaml not configured — allow access silently (local dev mode)
+    creds_path = _resolve_credentials_path()
+    if creds_path is None:
+        # No credentials configured — allow access silently (local dev mode).
         return
 
     with open(creds_path) as f:
