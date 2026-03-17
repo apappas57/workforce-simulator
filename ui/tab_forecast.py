@@ -78,8 +78,10 @@ def _forecast_chart(fc_df: pd.DataFrame) -> go.Figure:
         hovertemplate="Interval %{x}<br>Forecast: %{y:.1f}<extra></extra>",
     ))
 
-    # Day boundary lines
-    intervals_per_day = int(fc_df.groupby("date_local").size().mode().iloc[0])
+    # Day boundary lines — use mode of per-day interval counts; fall back to mean
+    _day_sizes = fc_df.groupby("date_local").size()
+    _mode = _day_sizes.mode()
+    intervals_per_day = int(_mode.iloc[0]) if not _mode.empty else max(int(_day_sizes.mean()), 1)
     days = fc_df["date_local"].unique()
     for i, day in enumerate(sorted(days)):
         if i == 0:

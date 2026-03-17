@@ -97,14 +97,6 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
     st.caption("Default: 486 min (8.1h elapsed), with 30 min unpaid lunch = 456 min (7.6h paid).")
 
     templates: List[Dict] = []
-    template_rows = [
-        ("08:00", 486, 60, True),
-        ("09:00", 486, 80, True),
-        ("10:00", 486, 70, True),
-        ("12:00", 300, 40, False),
-        ("14:00", 240, 30, False),
-        ("16:00", 486, 20, False),
-    ]
 
     hdr = st.columns(4)
     hdr[0].markdown("**Start**")
@@ -114,11 +106,10 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
 
     for i in range(6):
         c0, c1, c2, c3 = st.columns(4)
-        s0, d0, h0, u0 = template_rows[i]
-        start = c0.text_input(f"Start {i+1}", value=s0, key=f"tpl_start_{i}")
-        dur = c1.number_input(f"Dur {i+1}", min_value=30, max_value=720, value=int(d0), step=15, key=f"tpl_dur_{i}")
-        heads = c2.number_input(f"Heads {i+1}", min_value=0, max_value=5000, value=int(h0), step=1, key=f"tpl_heads_{i}")
-        use = c3.checkbox("Use", value=bool(u0), key=f"tpl_use_{i}")
+        start = c0.text_input(f"Start {i+1}", key=f"tpl_start_{i}")
+        dur   = c1.number_input(f"Dur {i+1}", min_value=30, max_value=720, step=15, key=f"tpl_dur_{i}")
+        heads = c2.number_input(f"Heads {i+1}", min_value=0, max_value=5000, step=1, key=f"tpl_heads_{i}")
+        use   = c3.checkbox("Use", key=f"tpl_use_{i}")
         if use and int(heads) > 0:
             templates.append({"start": start, "duration_min": int(dur), "heads": int(heads)})
 

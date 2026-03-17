@@ -28,8 +28,14 @@ try:
     from statsmodels.tsa.forecasting.stl import STLForecast
     from statsmodels.tsa.exponential_smoothing.ets import ETSModel
     _STATSMODELS_AVAILABLE = True
-except ImportError:  # pragma: no cover
+except ImportError:
     _STATSMODELS_AVAILABLE = False
+
+try:
+    from scipy import stats as _scipy_stats
+    _SCIPY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _SCIPY_AVAILABLE = False
 
 
 @dataclass
@@ -192,9 +198,12 @@ def _run_stl_forecast(
         forecast_mean = result.forecast(horizon)
         residuals = daily.values - result.fittedvalues.values
         std_resid = float(np.nanstd(residuals))
-        # z-score for two-sided CI
-        from scipy import stats as _scipy_stats
-        z = float(_scipy_stats.norm.ppf(0.5 + confidence_level / 2.0))
+        # z-score for two-sided CI — use scipy if available, else hardcoded approximations
+        if _SCIPY_AVAILABLE:
+            z = float(_scipy_stats.norm.ppf(0.5 + confidence_level / 2.0))
+        else:
+            _z_approx = {0.80: 1.2816, 0.90: 1.6449, 0.95: 1.9600, 0.99: 2.5758}
+            z = _z_approx.get(float(confidence_level), 1.6449)
         lower = forecast_mean - z * std_resid
         upper = forecast_mean + z * std_resid
 

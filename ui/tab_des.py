@@ -143,14 +143,13 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         h2.markdown("**Duration (min)**")
         h3.markdown("**Heads**")
 
-        for i, (s0, d0, h0) in enumerate(template_defaults):
+        for i in range(len(template_defaults)):
             c1, c2, c3 = st.columns(3)
-            start = c1.text_input(f"Shift start {i+1}", value=s0, key=f"des_break_shift_start_{i}")
+            start = c1.text_input(f"Shift start {i+1}", key=f"des_break_shift_start_{i}")
             dur = c2.number_input(
                 f"Shift duration {i+1}",
                 min_value=30,
                 max_value=720,
-                value=int(d0),
                 step=15,
                 key=f"des_break_shift_dur_{i}",
             )
@@ -158,7 +157,6 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
                 f"Shift heads {i+1}",
                 min_value=0,
                 max_value=5000,
-                value=int(h0),
                 step=1,
                 key=f"des_break_shift_heads_{i}",
             )
@@ -198,15 +196,14 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
             },
         ]
 
-        for i, rule in enumerate(default_break_rules):
+        for i in range(len(default_break_rules)):
             c1, c2, c3, c4 = st.columns(4)
 
-            name = c1.text_input("Rule name", value=rule["name"], key=f"des_break_rule_name_{i}")
+            name = c1.text_input("Rule name", key=f"des_break_rule_name_{i}")
             dur = c2.number_input(
                 "Duration",
                 min_value=5,
                 max_value=90,
-                value=int(rule["duration_min"]),
                 step=5,
                 key=f"des_break_rule_dur_{i}",
             )
@@ -214,7 +211,6 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
                 "Earliest offset",
                 min_value=0,
                 max_value=720,
-                value=int(rule["earliest_offset_min"]),
                 step=15,
                 key=f"des_break_rule_earliest_{i}",
             )
@@ -222,18 +218,18 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
                 "Latest offset",
                 min_value=0,
                 max_value=720,
-                value=int(rule["latest_offset_min"]),
                 step=15,
                 key=f"des_break_rule_latest_{i}",
             )
 
+            _rule_unpaid = default_break_rules[i].get("unpaid", False)
             shift_break_rules.append(
                 {
                     "name": name,
                     "duration_min": int(dur),
                     "earliest_offset_min": int(earliest),
                     "latest_offset_min": int(latest),
-                    "unpaid": bool(rule.get("unpaid", False)),
+                    "unpaid": bool(_rule_unpaid),
                 }
             )
 

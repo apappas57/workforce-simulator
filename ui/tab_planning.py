@@ -135,7 +135,7 @@ def _fte_capacity_chart(projection: pd.DataFrame) -> go.Figure:
         # Surplus/deficit filled band
         labels = list(projection["period_label"])
         avail = list(projection["available_fte"])
-        req = list(projection["required_fte"].fillna(method="ffill").fillna(0))
+        req = list(projection["required_fte"].ffill().fillna(0))
 
         fig.add_trace(go.Scatter(
             x=labels + labels[::-1],

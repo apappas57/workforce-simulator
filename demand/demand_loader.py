@@ -28,6 +28,8 @@ def load_demand_csv(file, input_tz: str = "UTC", model_tz: str = "Australia/Melb
 
         if "aht_seconds" in df.columns:
             df["aht_seconds"] = _coerce_numeric(df["aht_seconds"], "aht_seconds").astype(float)
+            if (df["aht_seconds"] <= 0).any():
+                raise ValueError("Column 'aht_seconds' must contain positive values (> 0).")
 
         df = df.sort_values("interval").reset_index(drop=True)
 
@@ -67,6 +69,8 @@ def load_demand_csv(file, input_tz: str = "UTC", model_tz: str = "Australia/Melb
 
         if "aht_seconds" in df.columns:
             df["aht_seconds"] = _coerce_numeric(df["aht_seconds"], "aht_seconds").astype(float)
+            if (df["aht_seconds"] <= 0).any():
+                raise ValueError("Column 'aht_seconds' must contain positive values (> 0).")
 
         return df
 

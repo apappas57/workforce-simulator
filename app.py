@@ -87,6 +87,23 @@ def _init_session_state() -> None:
         # --- Phase 12: PDF report ---
         "report_erlang_df":        pd.DataFrame(),
         "report_pdf_bytes":        None,
+
+        # --- Roster template widget defaults (tab_roster.py, fixed 6-row grid) ---
+        # Pre-registered here so widgets never receive both value= and key= simultaneously.
+        "tpl_start_0": "08:00", "tpl_dur_0": 486, "tpl_heads_0": 60, "tpl_use_0": True,
+        "tpl_start_1": "09:00", "tpl_dur_1": 486, "tpl_heads_1": 80, "tpl_use_1": True,
+        "tpl_start_2": "10:00", "tpl_dur_2": 486, "tpl_heads_2": 70, "tpl_use_2": True,
+        "tpl_start_3": "12:00", "tpl_dur_3": 300, "tpl_heads_3": 40, "tpl_use_3": False,
+        "tpl_start_4": "14:00", "tpl_dur_4": 240, "tpl_heads_4": 30, "tpl_use_4": False,
+        "tpl_start_5": "16:00", "tpl_dur_5": 486, "tpl_heads_5": 20, "tpl_use_5": False,
+
+        # --- DES break widget defaults (tab_des.py, fixed 3-shift + 3-rule grid) ---
+        "des_break_shift_start_0": "08:00", "des_break_shift_dur_0": 480, "des_break_shift_heads_0": 60,
+        "des_break_shift_start_1": "09:00", "des_break_shift_dur_1": 480, "des_break_shift_heads_1": 80,
+        "des_break_shift_start_2": "10:00", "des_break_shift_dur_2": 480, "des_break_shift_heads_2": 70,
+        "des_break_rule_name_0": "Tea 1", "des_break_rule_dur_0": 15, "des_break_rule_earliest_0": 120, "des_break_rule_latest_0": 180,
+        "des_break_rule_name_1": "Lunch",  "des_break_rule_dur_1": 30, "des_break_rule_earliest_1": 240, "des_break_rule_latest_1": 330,
+        "des_break_rule_name_2": "Tea 2",  "des_break_rule_dur_2": 15, "des_break_rule_earliest_2": 360, "des_break_rule_latest_2": 450,
     }
 
     for key, default in _DEFAULTS.items():
