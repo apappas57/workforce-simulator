@@ -311,6 +311,10 @@ imported with a try/except shim.
 | `tests/test_shrinkage_calculator.py` | Phase 6 remainder — observed shrinkage — 17 tests |
 | `tests/test_key_validator.py` | Phase 10 deployment key validation — 11 tests |
 | `tests/test_demand_forecaster.py` | Phase 11 forecasting engine — 26 tests (14 skip without statsmodels) |
+| `tests/test_cost_model.py` | Phase 13 cost engine — 31 tests |
+| `tests/test_config_store.py` | Phase 16 config store — 18 tests |
+| `tests/test_excel_export.py` | Phase 17 Excel export — 8 tests (openpyxl required; fallback test always runs) |
+| `tests/test_charts.py` | Phase 21 chart utilities — 26 tests (22 skip without plotly) |
 
 Run locally:
 ```bash
