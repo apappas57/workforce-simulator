@@ -15,8 +15,10 @@ import streamlit as st
 try:
     from reports.report_builder import ReportConfig, build_report
     _report_builder_available = True
-except ImportError:
+    _report_import_error = None
+except ImportError as _e:
     _report_builder_available = False
+    _report_import_error = str(_e)
 
 
 def render_report_tab(df_erlang: pd.DataFrame, cfg) -> None:
@@ -37,6 +39,8 @@ def render_report_tab(df_erlang: pd.DataFrame, cfg) -> None:
             "**Report builder unavailable.** Install the required packages:\n\n"
             "```\npip install reportlab matplotlib\n```"
         )
+        if _report_import_error:
+            st.caption(f"Import error: `{_report_import_error}`")
         return
 
     # ------------------------------------------------------------------
