@@ -1,4 +1,31 @@
 # Changelog
+## 2026-03-17 (Phase 15 — Multi-Queue Comparison)
+
+### Added
+Multi-queue comparison tab (ui/tab_multiqueue.py):
+- Up to 3 independent queues (Q1 enabled by default, Q2/Q3 disabled)
+- Per-queue config: name, open/close times (HH:MM), volume % of base
+  demand, AHT (s), SL target, SL threshold, shrinkage, occupancy cap
+- Erlang C runs per queue on every render using the base demand shape
+  scaled by each queue's volume %
+- Operating hours: grey vrect shading on charts for inactive intervals
+  (visual only — Erlang calculation unaffected)
+- Stacked bar chart: per-queue net agent requirement + combined total line
+- Two-panel SL%/occupancy% chart with per-queue SL target reference lines
+- Peak combined headcount metric (sum of queue peaks, dedicated pools)
+- Operating hours legend expander
+- Per-queue Erlang interval CSV + combined summary CSV downloads
+- 30 mq_q* widget keys pre-registered and persisted
+
+app.py changes:
+- import render_multiqueue_tab
+- 30 Phase 15 session state keys added to _DEFAULTS
+- Multi-Queue tab inserted at tabs[4]; Forecast→5, Planning→6,
+  Optimisation→7, Cost→8, Report→9, Downloads→10
+
+persistence/state_manager.py:
+- 30 Phase 15 widget defaults added to _DEFAULT_SETTINGS
+
 ## 2026-03-17 (Phase 14 — Scenario Planning Overhaul)
 
 ### Changed

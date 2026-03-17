@@ -97,6 +97,16 @@ _DEFAULT_SETTINGS: dict = {
     "sb_annual_working_hours":  1820,
     "sb_penalty_per_abandoned": 8.0,
     "sb_idle_rate_fraction":    1.0,
+    # Phase 15: multi-queue widget defaults
+    "mq_q1_enabled": True,  "mq_q1_name": "Queue 1", "mq_q1_open": "08:00", "mq_q1_close": "18:00",
+    "mq_q1_vol_pct": 100.0, "mq_q1_aht": 360.0, "mq_q1_sl_target": 0.80, "mq_q1_sl_threshold": 20.0,
+    "mq_q1_shrinkage": 0.35, "mq_q1_occ_cap": 0.85,
+    "mq_q2_enabled": False, "mq_q2_name": "Queue 2", "mq_q2_open": "08:00", "mq_q2_close": "18:00",
+    "mq_q2_vol_pct": 60.0,  "mq_q2_aht": 480.0, "mq_q2_sl_target": 0.80, "mq_q2_sl_threshold": 20.0,
+    "mq_q2_shrinkage": 0.35, "mq_q2_occ_cap": 0.85,
+    "mq_q3_enabled": False, "mq_q3_name": "Queue 3", "mq_q3_open": "09:00", "mq_q3_close": "17:00",
+    "mq_q3_vol_pct": 40.0,  "mq_q3_aht": 240.0, "mq_q3_sl_target": 0.80, "mq_q3_sl_threshold": 20.0,
+    "mq_q3_shrinkage": 0.35, "mq_q3_occ_cap": 0.85,
     # Phase 14: scenario planning widget defaults
     "sc_baseline_name":         "Baseline",
     "sc_des_abandonment":       True,

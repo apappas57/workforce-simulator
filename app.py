@@ -22,6 +22,7 @@ from models.cost_model import CostConfig
 from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
+from ui.tab_multiqueue import render_multiqueue_tab
 try:
     from supply.staffing_loader import load_staffing_csv, validate_staffing_data
     _staffing_loader_available = True
@@ -89,6 +90,20 @@ def _init_session_state() -> None:
         # --- Phase 12: PDF report ---
         "report_erlang_df":        pd.DataFrame(),
         "report_pdf_bytes":        None,
+
+        # --- Phase 15: multi-queue comparison ---
+        # Queue 1 (enabled by default as a starting point)
+        "mq_q1_enabled": True,  "mq_q1_name": "Queue 1", "mq_q1_open": "08:00", "mq_q1_close": "18:00",
+        "mq_q1_vol_pct": 100.0, "mq_q1_aht": 360.0, "mq_q1_sl_target": 0.80, "mq_q1_sl_threshold": 20.0,
+        "mq_q1_shrinkage": 0.35, "mq_q1_occ_cap": 0.85,
+        # Queue 2
+        "mq_q2_enabled": False, "mq_q2_name": "Queue 2", "mq_q2_open": "08:00", "mq_q2_close": "18:00",
+        "mq_q2_vol_pct": 60.0,  "mq_q2_aht": 480.0, "mq_q2_sl_target": 0.80, "mq_q2_sl_threshold": 20.0,
+        "mq_q2_shrinkage": 0.35, "mq_q2_occ_cap": 0.85,
+        # Queue 3
+        "mq_q3_enabled": False, "mq_q3_name": "Queue 3", "mq_q3_open": "09:00", "mq_q3_close": "17:00",
+        "mq_q3_vol_pct": 40.0,  "mq_q3_aht": 240.0, "mq_q3_sl_target": 0.80, "mq_q3_sl_threshold": 20.0,
+        "mq_q3_shrinkage": 0.35, "mq_q3_occ_cap": 0.85,
 
         # --- Phase 14: scenario planning ---
         "sc_des_results":          {},    # dict: scenario_name → DES summary
@@ -359,6 +374,7 @@ tabs = st.tabs([
     "Roster + Gaps + Optimiser",
     "DES validation",
     "Scenario Compare",
+    "Multi-Queue",
     "Demand Forecast",
     "Workforce Planning",
     "Hiring Optimisation",
@@ -379,19 +395,22 @@ with tabs[3]:
     render_scenarios_tab(df_inputs, cfg)
 
 with tabs[4]:
-    render_forecast_tab()
+    render_multiqueue_tab(df_inputs, cfg)
 
 with tabs[5]:
-    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_forecast_tab()
 
 with tabs[6]:
-    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[7]:
-    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
+    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[8]:
-    render_report_tab(df_erlang, cfg)
+    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
 
 with tabs[9]:
+    render_report_tab(df_erlang, cfg)
+
+with tabs[10]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)

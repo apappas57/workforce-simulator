@@ -35,7 +35,8 @@ Simulation design notes: see DES_NOTES.md
 | 12 | PDF report export | ✅ Complete |
 | 13 | Cost & financial analytics | ✅ Complete |
 | 14 | Scenario planning overhaul | ✅ Complete |
-| 15 | — | 🔜 Next |
+| 15 | Multi-queue comparison | ✅ Complete |
+| 16 | — | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -63,6 +64,17 @@ matplotlib Agg charts (no kaleido/Plotly dependency). Report tab added
 download button. df_erlang stored as report_erlang_df in session state
 after every compute cycle. reportlab==4.2.5 + matplotlib==3.9.4 added to
 requirements.txt.
+
+Phase 15 (multi-queue comparison) delivered: up to 3 independent queues modelled
+simultaneously (ui/tab_multiqueue.py). Each queue configures name, operating hours
+(open/close HH:MM), volume % of base demand, AHT, SL target, SL threshold, shrinkage,
+and occupancy cap. Erlang C runs per queue on every render. Operating hours are visual-
+only: grey vrect shading on charts marks inactive intervals. Stacked bar chart shows
+per-queue net agent requirement + combined total line. Two-panel SL%/occ% chart with
+per-queue SL target reference lines. Peak combined headcount metric. Operating hours
+legend expander + per-queue and summary CSV exports. 30 widget keys pre-registered in
+_init_session_state() and persisted via state_manager. Multi-Queue tab inserted at
+tabs[4]; subsequent tabs renumbered.
 
 Phase 14 (scenario planning overhaul) delivered: complete rewrite of ui/tab_scenarios.py.
 Up to 4 named scenarios (A–D) + baseline. Erlang C runs live on every render.
