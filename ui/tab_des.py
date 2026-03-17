@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import plotly.express as px
+from ui.charts import apply_dark_theme, PALETTE
 import streamlit as st
 
 from simulation.break_generation import build_break_schedule_from_shifts
@@ -258,15 +259,14 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
             )
 
     if break_curve_df is not None:
-        st.plotly_chart(
-            px.line(
-                break_curve_df,
-                x="interval",
-                y="break_agents_curve",
-                title="Generated break curve from shift-based rules",
-            ),
-            use_container_width=True,
+        _fig_break_curve = px.line(
+            break_curve_df,
+            x="interval",
+            y="break_agents_curve",
+            title="Generated break curve from shift-based rules",
         )
+        apply_dark_theme(_fig_break_curve)
+        st.plotly_chart(_fig_break_curve, use_container_width=True)
 
     has_roster = roster_df is not None
     has_staffing = staffing_df is not None and not staffing_df.empty
@@ -532,27 +532,25 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         )
         compare_plot = ensure_x_col(compare_plot, x_col)
 
-        st.plotly_chart(
-            px.line(
-                compare_plot,
-                x=x_col,
-                y="agents",
-                color="series",
-                title="Base staffing vs solver-required staffing",
-            ),
-            use_container_width=True,
+        _fig_solver_compare = px.line(
+            compare_plot,
+            x=x_col,
+            y="agents",
+            color="series",
+            title="Base staffing vs solver-required staffing",
         )
+        apply_dark_theme(_fig_solver_compare)
+        st.plotly_chart(_fig_solver_compare, use_container_width=True)
 
-        st.plotly_chart(
-            px.bar(
-                compare_df_view,
-                x=x_col,
-                y="staff_added",
-                color="date_local" if (use_ts and has_date) else None,
-                title="Staff added by solver",
-            ),
-            use_container_width=True,
+        _fig_staff_added = px.bar(
+            compare_df_view,
+            x=x_col,
+            y="staff_added",
+            color="date_local" if (use_ts and has_date) else None,
+            title="Staff added by solver",
         )
+        apply_dark_theme(_fig_staff_added)
+        st.plotly_chart(_fig_staff_added, use_container_width=True)
 
     with st.expander("Scenario stress test", expanded=False):
         enable_scenario = st.toggle(
@@ -693,28 +691,28 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         st.session_state["des_daily_summary"] = pd.DataFrame()
 
     st.markdown("### DES charts")
-    st.plotly_chart(
-        px.line(interval_kpis_view, x=x_col, y="sim_service_level", color="date_local" if (use_ts and has_date) else None, title="DES SL by interval"),
-        use_container_width=True,
-    )
-    st.plotly_chart(
-        px.line(interval_kpis_view, x=x_col, y="sim_asa_seconds", color="date_local" if (use_ts and has_date) else None, title="DES ASA by interval (sec)"),
-        use_container_width=True,
-    )
-    st.plotly_chart(
-        px.line(interval_kpis_view, x=x_col, y="sim_occupancy", color="date_local" if (use_ts and has_date) else None, title="DES occupancy by interval"),
-        use_container_width=True,
-    )
-    st.plotly_chart(
-        px.line(interval_kpis_view, x=x_col, y="sim_abandon_rate", color="date_local" if (use_ts and has_date) else None, title="DES Abandon rate by interval"),
-        use_container_width=True,
-    )
+    _color_arg = "date_local" if (use_ts and has_date) else None
+
+    _fig_sl = px.line(interval_kpis_view, x=x_col, y="sim_service_level", color=_color_arg, title="DES SL by interval")
+    apply_dark_theme(_fig_sl)
+    st.plotly_chart(_fig_sl, use_container_width=True)
+
+    _fig_asa = px.line(interval_kpis_view, x=x_col, y="sim_asa_seconds", color=_color_arg, title="DES ASA by interval (sec)")
+    apply_dark_theme(_fig_asa)
+    st.plotly_chart(_fig_asa, use_container_width=True)
+
+    _fig_occ = px.line(interval_kpis_view, x=x_col, y="sim_occupancy", color=_color_arg, title="DES occupancy by interval")
+    apply_dark_theme(_fig_occ)
+    st.plotly_chart(_fig_occ, use_container_width=True)
+
+    _fig_abandon = px.line(interval_kpis_view, x=x_col, y="sim_abandon_rate", color=_color_arg, title="DES Abandon rate by interval")
+    apply_dark_theme(_fig_abandon)
+    st.plotly_chart(_fig_abandon, use_container_width=True)
 
     if "sim_queue_length" in interval_kpis_view.columns:
-        st.plotly_chart(
-            px.line(interval_kpis_view, x=x_col, y="sim_queue_length", color="date_local" if (use_ts and has_date) else None, title="DES queue length by interval"),
-            use_container_width=True,
-        )
+        _fig_queue = px.line(interval_kpis_view, x=x_col, y="sim_queue_length", color=_color_arg, title="DES queue length by interval")
+        apply_dark_theme(_fig_queue)
+        st.plotly_chart(_fig_queue, use_container_width=True)
 
     agent_state_cols = [c for c in ["sim_busy_agents", "sim_idle_agents", "staff_sim"] if c in interval_kpis_view.columns]
     if len(agent_state_cols) > 0:
@@ -726,16 +724,15 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         )
         agent_state_plot = ensure_x_col(agent_state_plot, x_col)
 
-        st.plotly_chart(
-            px.line(
-                agent_state_plot,
-                x=x_col,
-                y="agents",
-                color="series",
-                title="DES agent state by interval",
-            ),
-            use_container_width=True,
+        _fig_agent_state = px.line(
+            agent_state_plot,
+            x=x_col,
+            y="agents",
+            color="series",
+            title="DES agent state by interval",
         )
+        apply_dark_theme(_fig_agent_state)
+        st.plotly_chart(_fig_agent_state, use_container_width=True)
 
     break_cols = [c for c in ["sim_break_agents", "sim_break_agents_target"] if c in interval_kpis_view.columns]
     if len(break_cols) > 0:
@@ -747,16 +744,15 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         )
         break_plot = ensure_x_col(break_plot, x_col)
 
-        st.plotly_chart(
-            px.line(
-                break_plot,
-                x=x_col,
-                y="agents",
-                color="series",
-                title="DES break state by interval",
-            ),
-            use_container_width=True,
+        _fig_break_state = px.line(
+            break_plot,
+            x=x_col,
+            y="agents",
+            color="series",
+            title="DES break state by interval",
         )
+        apply_dark_theme(_fig_break_state)
+        st.plotly_chart(_fig_break_state, use_container_width=True)
 
     with st.expander("Full interval KPI table", expanded=False):
         st.dataframe(interval_kpis_view.round(3), use_container_width=True)

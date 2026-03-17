@@ -21,6 +21,7 @@ from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
+from ui.charts import apply_dark_theme, PALETTE
 import streamlit as st
 
 from persistence import state_manager
@@ -89,6 +90,7 @@ def _headcount_chart(projection: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 
@@ -122,6 +124,7 @@ def _pipeline_chart(projection: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 
@@ -172,6 +175,7 @@ def _fte_capacity_chart(projection: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 

@@ -25,6 +25,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from ui.charts import apply_dark_theme
+
 try:
     from demand.demand_forecaster import ForecastParams, forecast_demand
     from demand.demand_loader import load_demand_csv, validate_demand
@@ -104,6 +106,7 @@ def _forecast_chart(fc_df: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", y=-0.2),
         hovermode="x unified",
     )
+    apply_dark_theme(fig)
     return fig
 
 
@@ -131,6 +134,7 @@ def _decomposition_chart(daily_series: pd.Series, stl_period: int) -> go.Figure:
         height=360,
         legend=dict(orientation="h", y=-0.25),
     )
+    apply_dark_theme(fig)
     return fig
 
 

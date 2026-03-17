@@ -1,4 +1,5 @@
 import plotly.express as px
+from ui.charts import apply_dark_theme, PALETTE
 import numpy as np
 import streamlit as st
 import pandas as pd
@@ -155,10 +156,9 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
 
     df_inputs_view = ensure_x_col(df_inputs_view, x_col)
 
-    st.plotly_chart(
-        px.line(df_inputs_view, x=x_col, y="calls_offered", color="date_local" if (use_ts and has_date) else None, title="Calls offered"),
-        use_container_width=True,
-    )
+    _fig_calls = px.line(df_inputs_view, x=x_col, y="calls_offered", color="date_local" if (use_ts and has_date) else None, title="Calls offered")
+    apply_dark_theme(_fig_calls)
+    st.plotly_chart(_fig_calls, use_container_width=True)
 
     req_id_vars = [x_col]
     if "date_local" in df_erlang.columns and "date_local" not in req_id_vars:
@@ -174,17 +174,16 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
     req_melt = ensure_x_col(req_melt, x_col)
     
     
-    st.plotly_chart(
-        px.line(
-            req_melt,
-            x=x_col,
-            y="agents",
-            color="series",
-            line_group="date_local" if (use_ts and "date_local" in req_melt.columns) else None,
-            title="Deterministic vs Erlang net and paid requirement",
-        ),
-        use_container_width=True,
+    _fig_req = px.line(
+        req_melt,
+        x=x_col,
+        y="agents",
+        color="series",
+        line_group="date_local" if (use_ts and "date_local" in req_melt.columns) else None,
+        title="Deterministic vs Erlang net and paid requirement",
     )
+    apply_dark_theme(_fig_req)
+    st.plotly_chart(_fig_req, use_container_width=True)
 
     if staffing_df is not None and not staffing_df.empty:
         st.markdown("### Staffing supply preview")
@@ -315,28 +314,26 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
             )
             supply_plot = ensure_x_col(supply_plot, x_col)
 
-            st.plotly_chart(
-                px.line(
-                    supply_plot,
-                    x=x_col,
-                    y="agents",
-                    color="series",
-                    line_group="date_local" if (use_ts and "date_local" in supply_plot.columns) else None,
-                    title="Raw and effective staffing supply vs Erlang requirement",
-                ),
-                use_container_width=True,
+            _fig_supply = px.line(
+                supply_plot,
+                x=x_col,
+                y="agents",
+                color="series",
+                line_group="date_local" if (use_ts and "date_local" in supply_plot.columns) else None,
+                title="Raw and effective staffing supply vs Erlang requirement",
             )
+            apply_dark_theme(_fig_supply)
+            st.plotly_chart(_fig_supply, use_container_width=True)
 
-            st.plotly_chart(
-                px.bar(
-                    staffing_preview,
-                    x=x_col,
-                    y="effective_under_supply_agents",
-                    color="date_local" if (use_ts and "date_local" in staffing_preview.columns) else None,
-                    title="Intervals where effective supply is below requirement",
-                ),
-                use_container_width=True,
+            _fig_under = px.bar(
+                staffing_preview,
+                x=x_col,
+                y="effective_under_supply_agents",
+                color="date_local" if (use_ts and "date_local" in staffing_preview.columns) else None,
+                title="Intervals where effective supply is below requirement",
             )
+            apply_dark_theme(_fig_under)
+            st.plotly_chart(_fig_under, use_container_width=True)
 
             preview_cols = list(dict.fromkeys([
                 c for c in [

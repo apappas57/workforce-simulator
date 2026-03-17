@@ -16,6 +16,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from ui.charts import apply_dark_theme
+
 from persistence import state_manager
 from planning.workforce_planner import PlanningParams
 from planning.hiring_loader import load_required_fte_plan
@@ -43,6 +45,7 @@ def _optimal_hires_chart(result_df: pd.DataFrame) -> go.Figure:
         yaxis_title="Hires",
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 
@@ -85,6 +88,7 @@ def _fte_vs_required_chart(result_df: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 
@@ -115,6 +119,7 @@ def _cost_breakdown_chart(result_df: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 
@@ -142,6 +147,7 @@ def _scenario_comparison_chart(scenario_df: pd.DataFrame) -> go.Figure:
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=40),
     )
+    apply_dark_theme(fig)
     return fig
 
 
