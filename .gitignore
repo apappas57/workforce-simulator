@@ -47,6 +47,9 @@ temp/
 # Phase 9: persisted state (local to machine, not for version control)
 state/
 
+# Phase 16: named config snapshots (local to machine, not for version control)
+configs/
+
 # Phase 10: secrets and credentials (never commit these)
 auth/private_key.pem
 auth/credentials.yaml
