@@ -4,6 +4,12 @@ import streamlit as st
 import pandas as pd
 from ui.date_view import apply_date_view, render_date_view_controls, ensure_x_col
 
+try:
+    from supply.shrinkage_calculator import compute_observed_shrinkage
+    _shrinkage_calc_available = True
+except ImportError:
+    _shrinkage_calc_available = False
+
 def _build_demand_daily_summary(df: pd.DataFrame) -> pd.DataFrame:
     if "date_local" not in df.columns:
         return pd.DataFrame()
@@ -188,6 +194,58 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
         staffing_preview = ensure_x_col(staffing_preview, x_col)
 
         st.markdown("#### Activity modelling")
+
+        # Phase 6 remainder: derive observed shrinkage from activity column if present.
+        obs = {}
+        if _shrinkage_calc_available:
+            obs = compute_observed_shrinkage(staffing_df)
+
+        if obs.get("has_activity_data"):
+            obs_pct = obs["observed_shrinkage_pct"]
+            cov_pct = obs["coverage_pct"]
+            obs_col1, obs_col2, obs_col3, obs_col4 = st.columns(4)
+            obs_col1.metric(
+                "Observed shrinkage",
+                f"{obs_pct:.1f} %" if obs_pct is not None else "—",
+                help="Derived from non-productive activity codes in the uploaded staffing CSV.",
+            )
+            obs_col2.metric(
+                "Productive",
+                f"{obs['productive_pct']:.1f} %" if obs.get("productive_pct") is not None else "—",
+            )
+            obs_col3.metric(
+                "Non-productive",
+                f"{obs['non_productive_pct']:.1f} %" if obs.get("non_productive_pct") is not None else "—",
+            )
+            obs_col4.metric(
+                "Activity coverage",
+                f"{cov_pct:.1f} %",
+                help="% of staff-intervals where the activity was recognised as productive or non-productive.",
+            )
+
+            if obs_pct is not None:
+                st.info(
+                    f"Your staffing data shows **{obs_pct:.1f} %** observed shrinkage "
+                    f"(based on {cov_pct:.1f} % activity coverage). "
+                    "Set the slider below to this value to apply it to the effective capacity calculation.",
+                    icon="📊",
+                )
+
+            with st.expander("Activity breakdown", expanded=False):
+                breakdown_df = obs.get("activity_breakdown", pd.DataFrame())
+                if not breakdown_df.empty:
+                    st.dataframe(breakdown_df, use_container_width=True, hide_index=True)
+                else:
+                    st.caption("No activity breakdown available.")
+
+            if obs.get("unknown_pct", 0) > 10:
+                st.warning(
+                    f"{obs['unknown_pct']:.1f} % of staff-intervals have unrecognised activity codes. "
+                    "These are excluded from the shrinkage calculation. "
+                    "Check the activity breakdown above and consider standardising your activity labels.",
+                    icon="⚠️",
+                )
+
         activity_shrinkage_pct = st.slider(
             "Activity shrinkage %",
             min_value=0.0,

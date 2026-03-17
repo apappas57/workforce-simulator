@@ -26,7 +26,7 @@ Simulation design notes: see DES_NOTES.md
 | 1–3 | Core model foundation | ✅ Complete |
 | 4 | Simulation accuracy (DES v2) | ✅ Complete |
 | 5 | Multi-day simulation | ✅ Complete |
-| 6 | Workforce supply model | ✅ Complete |
+| 6 | Workforce supply model + observed shrinkage | ✅ Complete |
 | 7 | Strategic workforce planning | ✅ Complete |
 | 8 | Optimisation engine | ✅ Complete |
 | 9 | Platform development | 🔄 In progress |
@@ -146,6 +146,7 @@ imported with a try/except shim.
 | `tests/test_workforce_planner.py` | Phase 7 projection engine — 15 tests |
 | `tests/test_workforce_optimiser.py` | Phase 8 LP optimiser — 12 tests (requires pulp) |
 | `tests/test_state_manager.py` | Phase 9 persistence layer — 20 tests (parquet test skipped without pyarrow) |
+| `tests/test_shrinkage_calculator.py` | Phase 6 remainder — observed shrinkage — 17 tests |
 
 Run locally:
 ```bash
@@ -238,7 +239,6 @@ entry in `_DEFAULT_SETTINGS` must be updated to match.
 
 ## Known limitations (current)
 
-- Shrinkage is a static factor; activity-based dynamic shrinkage is pending (Phase 6 remainder).
 - Scenario output comparison visuals are early-stage.
 - No authentication (Phase 10).
 - `staffing_loader.py` uses `"staffing_interval_input"` as a placeholder `date_local`

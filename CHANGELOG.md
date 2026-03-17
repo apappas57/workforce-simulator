@@ -1,4 +1,31 @@
 # Changelog
+## 2026-03-17 (Phase 6 remainder — observed shrinkage)
+
+### Added
+Observed shrinkage calculator (supply/shrinkage_calculator.py).
+
+classify_activity() classifies a free-text activity label as productive,
+non_productive, or unknown using case-insensitive keyword matching against
+two curated sets covering common WFM activity codes.
+
+compute_observed_shrinkage() takes a canonical staffing DataFrame and returns:
+- observed_shrinkage_pct: non-productive / classifiable staff-intervals × 100
+- productive_pct, non_productive_pct, unknown_pct breakdowns
+- coverage_pct: proportion of staff-weight with a known activity
+- activity_breakdown: per-activity DataFrame sorted by staff weight
+
+Weighted by available_staff where present; falls back to equal row weighting.
+
+Demand tab updated: when activity data is present, shows four metric cards
+(observed shrinkage, productive %, non-productive %, coverage %), an info banner
+with the observed rate and a suggestion to apply it to the slider, an expandable
+activity breakdown table, and a warning if > 10 % of intervals are unrecognised.
+The existing manual activity shrinkage slider is retained unchanged.
+
+17 unit tests added (tests/test_shrinkage_calculator.py).
+
+---
+
 ## 2026-03-16 (Phase 9)
 
 ### Added
