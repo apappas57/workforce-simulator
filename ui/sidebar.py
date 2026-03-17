@@ -85,12 +85,12 @@ def render_sidebar():
         st.divider()
         st.header("Finance & operations")
         st.caption(
-            "Used by the Cost Analytics tab. All costs in local currency (£ by default)."
+            "Used by the Cost Analytics tab. All costs in local currency ($ by default)."
         )
 
         st.selectbox(
             "Agent cost rate type",
-            ["Hourly (£/hr)", "Annualised (£/year)"],
+            ["Hourly ($/hr)", "Annualised ($/year)"],
             help=(
                 "Hourly: direct cost per productive agent per hour.\n\n"
                 "Annualised: total all-in annual cost (salary + on-costs). "
@@ -100,9 +100,9 @@ def render_sidebar():
         )
 
         _rate_label = (
-            "Agent cost rate (£/hr)"
-            if st.session_state.get("sb_cost_rate_type", "Hourly (£/hr)") == "Hourly (£/hr)"
-            else "Agent cost rate (£/year)"
+            "Agent cost rate ($/hr)"
+            if st.session_state.get("sb_cost_rate_type", "Hourly ($/hr)") == "Hourly ($/hr)"
+            else "Agent cost rate ($/year)"
         )
         st.number_input(
             _rate_label,
@@ -113,7 +113,7 @@ def render_sidebar():
             key="sb_agent_cost_rate",
         )
 
-        if st.session_state.get("sb_cost_rate_type", "Hourly (£/hr)") == "Annualised (£/year)":
+        if st.session_state.get("sb_cost_rate_type", "Hourly ($/hr)") == "Annualised ($/year)":
             st.number_input(
                 "Annual working hours per FTE",
                 min_value=100,
@@ -128,7 +128,7 @@ def render_sidebar():
             )
 
         st.number_input(
-            "SLA breach penalty (£/abandoned call)",
+            "SLA breach penalty ($/abandoned call)",
             min_value=0.0,
             max_value=10_000.0,
             step=0.5,
@@ -178,12 +178,12 @@ def render_sidebar():
         )
 
     # --- Cost config: convert annualised rate to hourly if needed ---------- #
-    _rate_type  = st.session_state.get("sb_cost_rate_type", "Hourly (£/hr)")
+    _rate_type  = st.session_state.get("sb_cost_rate_type", "Hourly ($/hr)")
     _raw_rate   = float(st.session_state.get("sb_agent_cost_rate", 30.0))
     _annual_hrs = float(st.session_state.get("sb_annual_working_hours", 1820))
     _hourly_rate = (
         _raw_rate / _annual_hrs
-        if _rate_type == "Annualised (£/year)" and _annual_hrs > 0
+        if _rate_type == "Annualised ($/year)" and _annual_hrs > 0
         else _raw_rate
     )
 

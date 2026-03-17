@@ -117,7 +117,7 @@ def _init_session_state() -> None:
         "cost_interval_df":        pd.DataFrame(),
         "cost_monthly_df":         pd.DataFrame(),
         # sidebar cost widget defaults (populated from state_manager on reload)
-        "sb_cost_rate_type":       "Hourly (£/hr)",
+        "sb_cost_rate_type":       "Hourly ($/hr)",
         "sb_agent_cost_rate":      30.0,
         "sb_annual_working_hours": 1820,
         "sb_penalty_per_abandoned": 8.0,

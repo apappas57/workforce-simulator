@@ -101,11 +101,11 @@ def render_cost_tab(
     st.caption(basis_note + abandon_note)
 
     m1, m2, m3, m4, m5, m6 = st.columns(6)
-    m1.metric("Total labour cost",     f"£{summary.get('total_labour_cost', 0):,.2f}")
-    m2.metric("SLA breach cost",       f"£{summary.get('total_sla_breach_cost', 0):,.2f}")
-    m3.metric("Idle agent cost",       f"£{summary.get('total_idle_cost', 0):,.2f}")
-    m4.metric("Total cost",            f"£{summary.get('total_cost', 0):,.2f}")
-    m5.metric("Avg cost / call",       f"£{summary.get('avg_cost_per_call', 0):,.4f}")
+    m1.metric("Total labour cost",     f"${summary.get('total_labour_cost', 0):,.2f}")
+    m2.metric("SLA breach cost",       f"${summary.get('total_sla_breach_cost', 0):,.2f}")
+    m3.metric("Idle agent cost",       f"${summary.get('total_idle_cost', 0):,.2f}")
+    m4.metric("Total cost",            f"${summary.get('total_cost', 0):,.2f}")
+    m5.metric("Avg cost / call",       f"${summary.get('avg_cost_per_call', 0):,.4f}")
     m6.metric("Overstaffed intervals", f"{summary.get('overstaffed_intervals_pct', 0):.1f}%")
 
     st.divider()
@@ -136,20 +136,20 @@ def render_cost_tab(
         x=x_vals,
         y=cost_view["labour_cost"].tolist(),
         marker_color=_BLUE,
-        hovertemplate="Interval %{x}<br>Labour: £%{y:,.2f}<extra></extra>",
+        hovertemplate="Interval %{x}<br>Labour: $%{y:,.2f}<extra></extra>",
     ))
     fig_bar.add_trace(go.Bar(
         name="SLA breach cost",
         x=x_vals,
         y=cost_view["sla_breach_cost"].tolist(),
         marker_color=_RED,
-        hovertemplate="Interval %{x}<br>Breach: £%{y:,.2f}<extra></extra>",
+        hovertemplate="Interval %{x}<br>Breach: $%{y:,.2f}<extra></extra>",
     ))
 
     fig_bar.update_layout(
         barmode="stack",
         xaxis_title="Interval",
-        yaxis_title="Cost (£)",
+        yaxis_title="Cost ($)",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=320,
         margin=dict(t=10, b=40),
@@ -165,12 +165,12 @@ def render_cost_tab(
 
     fig_cpc = go.Figure()
     fig_cpc.add_trace(go.Scatter(
-        name="Cost / call (£)",
+        name="Cost / call ($)",
         x=x_vals,
         y=cost_view["cost_per_call"].tolist(),
         mode="lines",
         line=dict(color=_NAVY, width=1.8),
-        hovertemplate="Interval %{x}<br>£%{y:,.4f} / call<extra></extra>",
+        hovertemplate="Interval %{x}<br>$%{y:,.4f} / call<extra></extra>",
     ))
     fig_cpc.add_trace(go.Scatter(
         name="Agents rostered",
@@ -184,7 +184,7 @@ def render_cost_tab(
 
     fig_cpc.update_layout(
         xaxis_title="Interval",
-        yaxis=dict(title="Cost / call (£)", side="left",  gridcolor="#F0F0F0"),
+        yaxis=dict(title="Cost / call ($)", side="left",  gridcolor="#F0F0F0"),
         yaxis2=dict(title="Agents", side="right", overlaying="y", showgrid=False),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=280,
@@ -212,7 +212,7 @@ def render_cost_tab(
             x=x_vals,
             y=cost_view["idle_cost"].tolist(),
             marker_color=_AMBER,
-            hovertemplate="Interval %{x}<br>Idle: £%{y:,.2f}<extra></extra>",
+            hovertemplate="Interval %{x}<br>Idle: $%{y:,.2f}<extra></extra>",
         ))
         fig_idle.add_trace(go.Scatter(
             name="Surplus agents",
@@ -225,7 +225,7 @@ def render_cost_tab(
         ))
         fig_idle.update_layout(
             xaxis_title="Interval",
-            yaxis=dict(title="Idle cost (£)", gridcolor="#F0F0F0"),
+            yaxis=dict(title="Idle cost ($)", gridcolor="#F0F0F0"),
             yaxis2=dict(title="Surplus agents", overlaying="y", side="right", showgrid=False),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=260,
@@ -262,7 +262,7 @@ def render_cost_tab(
                 x=label_vals,
                 y=monthly_df["monthly_labour_cost"].tolist(),
                 marker_color=_BLUE,
-                hovertemplate="%{x}<br>£%{y:,.0f}<extra></extra>",
+                hovertemplate="%{x}<br>$%{y:,.0f}<extra></extra>",
             ))
 
         if "monthly_required_cost" in monthly_df.columns:
@@ -272,7 +272,7 @@ def render_cost_tab(
                 y=monthly_df["monthly_required_cost"].tolist(),
                 mode="lines+markers",
                 line=dict(color=_AMBER, width=2, dash="dash"),
-                hovertemplate="%{x}<br>£%{y:,.0f} required<extra></extra>",
+                hovertemplate="%{x}<br>$%{y:,.0f} required<extra></extra>",
             ))
 
         if "monthly_cost_gap" in monthly_df.columns:
@@ -283,13 +283,13 @@ def render_cost_tab(
                 mode="lines+markers",
                 line=dict(color=_RED, width=1.5, dash="dot"),
                 yaxis="y2",
-                hovertemplate="%{x}<br>Gap: £%{y:,.0f}<extra></extra>",
+                hovertemplate="%{x}<br>Gap: $%{y:,.0f}<extra></extra>",
             ))
 
         fig_m.update_layout(
             xaxis_title="Period",
-            yaxis=dict(title="Labour cost (£)", gridcolor="#F0F0F0"),
-            yaxis2=dict(title="Cost gap (£)", overlaying="y", side="right", showgrid=False),
+            yaxis=dict(title="Labour cost ($)", gridcolor="#F0F0F0"),
+            yaxis2=dict(title="Cost gap ($)", overlaying="y", side="right", showgrid=False),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=320,
             margin=dict(t=10, b=40),
@@ -300,8 +300,8 @@ def render_cost_tab(
 
         total_proj = monthly_df.get("monthly_labour_cost", pd.Series([0])).sum()
         st.caption(
-            f"Total projected labour cost over planning horizon: **£{total_proj:,.0f}** "
-            f"at £{cost_cfg.hourly_agent_cost:.2f}/hr effective rate."
+            f"Total projected labour cost over planning horizon: **${total_proj:,.0f}** "
+            f"at ${cost_cfg.hourly_agent_cost:.2f}/hr effective rate."
         )
 
         # Monthly summary table
