@@ -7,6 +7,20 @@ import streamlit as st
 
 from config.sim_config import SimConfig
 from demand.demand_loader import build_synthetic_day, load_demand_csv, validate_demand
+
+
+def _hhmm_to_interval(hhmm: str, interval_minutes: int) -> int:
+    """Convert 'HH:MM' string to a 0-based interval index from midnight.
+
+    '08:00' with 15-min intervals → 32.  '18:00' → 72.  '00:00' → 0.
+    Invalid strings silently return 0.
+    """
+    try:
+        parts = hhmm.strip().split(":")
+        total_minutes = int(parts[0]) * 60 + int(parts[1])
+        return total_minutes // max(interval_minutes, 1)
+    except Exception:
+        return 0
 from models.deterministic import deterministic_staffing as _deterministic_staffing
 from models.erlang import solve_staffing_erlang as _solve_staffing_erlang
 
@@ -155,6 +169,11 @@ def _init_session_state() -> None:
         # --- Phase 16: config save/load sidebar widget state ---
         "sb_config_save_name":     "",
         "sb_config_select":        None,
+
+        # --- Operating hours (synthetic demand) ---
+        "sb_operating_hours_enabled": False,
+        "sb_centre_open":          "08:00",
+        "sb_centre_close":         "18:00",
 
         # --- Roster template widget defaults (tab_roster.py, fixed 6-row grid) ---
         # Pre-registered here so widgets never receive both value= and key= simultaneously.
@@ -531,6 +550,17 @@ _init_session_state()
 
 sidebar_inputs = render_sidebar()
 
+# Operating hours: derive interval indices from HH:MM strings.
+# close == 0 is the "full day / disabled" sentinel; both fields stay 0
+# when the feature is off so SimConfig hashing remains stable.
+_oh_enabled = sidebar_inputs.get("operating_hours_enabled", False)
+_interval_min = sidebar_inputs["interval_minutes"]
+_open_i  = _hhmm_to_interval(sidebar_inputs.get("centre_open",  "08:00"), _interval_min) if _oh_enabled else 0
+_close_i = _hhmm_to_interval(sidebar_inputs.get("centre_close", "18:00"), _interval_min) if _oh_enabled else 0
+# Guard: if open >= close when enabled, treat as disabled (avoids zeroing everything).
+if _oh_enabled and _close_i <= _open_i:
+    _open_i, _close_i = 0, 0
+
 cfg = SimConfig(
     interval_minutes=sidebar_inputs["interval_minutes"],
     aht_seconds=sidebar_inputs["aht_seconds"],
@@ -539,6 +569,8 @@ cfg = SimConfig(
     sl_threshold_seconds=sidebar_inputs["sl_threshold_seconds"],
     sl_target=sidebar_inputs["sl_target"],
     seed=sidebar_inputs["seed"],
+    centre_open_interval=_open_i,
+    centre_close_interval=_close_i,
 )
 
 # Phase 13: build cost config from sidebar inputs (rate already in hourly terms).
@@ -572,6 +604,14 @@ else:
                 num_intervals=num_intervals,
                 avg_calls=sidebar_inputs["avg_calls"],
             )
+            # Apply operating hours: zero calls outside [open, close).
+            if cfg.centre_close_interval > cfg.centre_open_interval:
+                _oh_mask = (
+                    (df_inputs["interval"] < cfg.centre_open_interval) |
+                    (df_inputs["interval"] >= cfg.centre_close_interval)
+                )
+                df_inputs = df_inputs.copy()
+                df_inputs.loc[_oh_mask, "calls_offered"] = 0.0
         else:
             df_inputs = load_demand_csv(
                 sidebar_inputs["uploaded"],
@@ -659,7 +699,7 @@ with tabs[1]:
     render_quickcalc_tab()
 
 with tabs[2]:
-    render_demand_tab(df_inputs, df_erlang, staffing_df=staffing_df)
+    render_demand_tab(df_inputs, df_erlang, staffing_df=staffing_df, cfg=cfg)
 
 with tabs[3]:
     roster_df = render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=staffing_df)

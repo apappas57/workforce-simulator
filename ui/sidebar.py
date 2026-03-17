@@ -129,6 +129,18 @@ def render_sidebar():
             key="sb_avg_calls",
         )
 
+        with st.expander("Operating hours", expanded=False):
+            st.caption(
+                "Applies to synthetic demand only. Intervals outside the window "
+                "are zeroed so charts and Erlang C reflect a real operating day."
+            )
+            st.toggle("Enable operating hours", key="sb_operating_hours_enabled")
+            oh_col1, oh_col2 = st.columns(2)
+            with oh_col1:
+                st.text_input("Open (HH:MM)", key="sb_centre_open")
+            with oh_col2:
+                st.text_input("Close (HH:MM)", key="sb_centre_close")
+
         st.divider()
         st.header("Staffing supply input")
         with st.expander("CSV format", expanded=False):
@@ -272,6 +284,9 @@ def render_sidebar():
         "avg_calls":            float(st.session_state["sb_avg_calls"]),
         "staffing_uploaded":    staffing_uploaded,
         "seed":                 int(st.session_state["sb_seed"]),
+        "operating_hours_enabled": bool(st.session_state.get("sb_operating_hours_enabled", False)),
+        "centre_open":          str(st.session_state.get("sb_centre_open", "08:00")),
+        "centre_close":         str(st.session_state.get("sb_centre_close", "18:00")),
         "input_tz":             st.session_state["sb_input_tz"],
         "model_tz":             st.session_state["sb_model_tz"],
         # Phase 13: cost config

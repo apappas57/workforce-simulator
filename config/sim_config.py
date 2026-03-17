@@ -10,3 +10,9 @@ class SimConfig:
     sl_threshold_seconds: float = 180.0
     sl_target: float = 0.60
     seed: int = 42
+    # Operating hours (synthetic demand only).
+    # centre_close_interval == 0 means "full day" (feature disabled).
+    # Both are 0-based interval indices relative to midnight.
+    # open is inclusive, close is exclusive (half-open interval [open, close)).
+    centre_open_interval: int = 0
+    centre_close_interval: int = 0

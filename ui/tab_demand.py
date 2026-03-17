@@ -1,5 +1,5 @@
 import plotly.express as px
-from ui.charts import apply_dark_theme, PALETTE
+from ui.charts import apply_dark_theme, PALETTE, add_operating_hours_vrect
 import numpy as np
 import streamlit as st
 import pandas as pd
@@ -15,20 +15,27 @@ def _build_demand_daily_summary(df: pd.DataFrame) -> pd.DataFrame:
     if "date_local" not in df.columns:
         return pd.DataFrame()
 
-    agg = {
-        "calls_offered": "sum",
-    }
-
+    # Sum / max aggregations across all intervals (including zero-call)
+    agg = {"calls_offered": "sum"}
     if "erlang_required_net_agents" in df.columns:
         agg["erlang_required_net_agents"] = "max"
     if "det_required_net_ceil" in df.columns:
         agg["det_required_net_ceil"] = "max"
-    if "erlang_pred_service_level" in df.columns:
-        agg["erlang_pred_service_level"] = "mean"
-    if "erlang_pred_occupancy" in df.columns:
-        agg["erlang_pred_occupancy"] = "mean"
 
     daily = df.groupby("date_local", as_index=False).agg(agg)
+
+    # Average SL / occupancy over *active* intervals only so that zero-call
+    # off-hours intervals (which trivially return SL=100%, occ=0%) don't
+    # distort the daily averages.
+    active = df[df["calls_offered"].gt(0)] if "calls_offered" in df.columns else df
+
+    if "erlang_pred_service_level" in active.columns and not active.empty:
+        sl_avg = active.groupby("date_local", as_index=False)["erlang_pred_service_level"].mean()
+        daily = daily.merge(sl_avg, on="date_local", how="left")
+
+    if "erlang_pred_occupancy" in active.columns and not active.empty:
+        occ_avg = active.groupby("date_local", as_index=False)["erlang_pred_occupancy"].mean()
+        daily = daily.merge(occ_avg, on="date_local", how="left")
 
     rename_map = {
         "calls_offered": "total_calls",
@@ -118,7 +125,7 @@ def _build_staffing_daily_summary(staffing_preview: pd.DataFrame) -> pd.DataFram
 
     return daily
 
-def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
+def render_demand_tab(df_inputs, df_erlang, staffing_df=None, cfg=None):
 
     st.subheader("Demand and requirements")
     
@@ -158,6 +165,8 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
 
     _fig_calls = px.line(df_inputs_view, x=x_col, y="calls_offered", color="date_local" if (use_ts and has_date) else None, title="Calls offered")
     apply_dark_theme(_fig_calls)
+    if not use_ts and cfg is not None and cfg.centre_close_interval > cfg.centre_open_interval:
+        add_operating_hours_vrect(_fig_calls, cfg.centre_open_interval, cfg.centre_close_interval, len(df_inputs_view))
     st.plotly_chart(_fig_calls, use_container_width=True)
 
     req_id_vars = [x_col]
@@ -183,6 +192,8 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
         title="Deterministic vs Erlang net and paid requirement",
     )
     apply_dark_theme(_fig_req)
+    if not use_ts and cfg is not None and cfg.centre_close_interval > cfg.centre_open_interval:
+        add_operating_hours_vrect(_fig_req, cfg.centre_open_interval, cfg.centre_close_interval, len(df_erlang_view))
     st.plotly_chart(_fig_req, use_container_width=True)
 
     if staffing_df is not None and not staffing_df.empty:
