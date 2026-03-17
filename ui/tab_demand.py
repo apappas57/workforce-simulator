@@ -238,6 +238,20 @@ def render_demand_tab(df_inputs, df_erlang, staffing_df=None):
                 else:
                     st.caption("No activity breakdown available.")
 
+            with st.expander("Recognised activity labels", expanded=False):
+                st.markdown(
+                    "Activity classification uses case-insensitive keyword matching. "
+                    "Any label containing one of these keywords is classified accordingly.\n\n"
+                    "**Productive** — available, ready, on call, inbound, outbound, "
+                    "handling, talking, busy, logged in, signed in, answering, in call\n\n"
+                    "**Non-productive** — break, lunch, morning tea, afternoon tea, training, "
+                    "meeting, coaching, admin, offline, aux, away, unavailable, wrap, acw, "
+                    "after call work, bio break, comfort break, personal, not ready, "
+                    "1:1, onboarding, project, email, back office\n\n"
+                    "Labels not matching either list are classified as **unknown** and "
+                    "excluded from the shrinkage calculation."
+                )
+
             if obs.get("unknown_pct", 0) > 10:
                 st.warning(
                     f"{obs['unknown_pct']:.1f} % of staff-intervals have unrecognised activity codes. "

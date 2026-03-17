@@ -35,6 +35,22 @@ def render_sidebar():
 
         st.divider()
         st.header("Demand input")
+        with st.expander("CSV format", expanded=False):
+            st.markdown(
+                "**Option A — interval-indexed** *(single day)*\n\n"
+                "| Column | Required | Notes |\n"
+                "|---|---|---|\n"
+                "| `interval` | ✅ | Integer index (0, 1, 2 …) |\n"
+                "| `calls_offered` | ✅ | Calls in this interval |\n"
+                "| `aht_seconds` | optional | Overrides sidebar AHT |\n\n"
+                "**Option B — timestamp-indexed** *(single or multi-day)*\n\n"
+                "| Column | Required | Notes |\n"
+                "|---|---|---|\n"
+                "| `start_ts` | ✅ | ISO 8601 timestamp |\n"
+                "| `calls_offered` | ✅ | Calls in this interval |\n"
+                "| `aht_seconds` | optional | Overrides sidebar AHT |\n\n"
+                "Timezone is set by the Time Zone section below."
+            )
         uploaded = st.file_uploader("Upload demand CSV", type=["csv"])
         use_synth = st.toggle("Use synthetic day instead", value=(uploaded is None))
         st.slider(
@@ -45,6 +61,23 @@ def render_sidebar():
 
         st.divider()
         st.header("Staffing supply input")
+        with st.expander("CSV format", expanded=False):
+            st.markdown(
+                "**Required** (one of):\n\n"
+                "| Column | Notes |\n"
+                "|---|---|\n"
+                "| `interval` | Integer index matching demand intervals |\n"
+                "| `start_ts` | ISO 8601 timestamp (use with timezone below) |\n\n"
+                "| `available_staff` | ✅ Always required |\n\n"
+                "**Optional columns:**\n\n"
+                "| Column | Notes |\n"
+                "|---|---|\n"
+                "| `activity` | Activity label — enables observed shrinkage calculation |\n"
+                "| `team` | Team or queue identifier |\n"
+                "| `queue` | Queue name |\n"
+                "| `paid_hours` | Paid hours for this interval |\n\n"
+                "Multiple rows per interval are supported (e.g. one row per activity)."
+            )
         staffing_uploaded = st.file_uploader(
             "Upload staffing CSV", type=["csv"], key="staffing_upload"
         )
