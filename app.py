@@ -90,6 +90,29 @@ def _init_session_state() -> None:
         "report_erlang_df":        pd.DataFrame(),
         "report_pdf_bytes":        None,
 
+        # --- Phase 14: scenario planning ---
+        "sc_des_results":          {},    # dict: scenario_name → DES summary
+        "sc_baseline_name":        "Baseline",
+        "sc_des_abandonment":      True,
+        "sc_des_patience":         180,
+        "sc_des_patience_dist":    "exponential",
+        # Scenario A
+        "scA_enabled": False, "scA_name": "Scenario A", "scA_vol": 1.0, "scA_aht": 1.0,
+        "scA_ov_shrink": False, "scA_shrink": 0.35, "scA_ov_occ": False, "scA_occ": 0.85,
+        "scA_ov_sl": False, "scA_sl": 0.60, "scA_ov_thr": False, "scA_thr": 180,
+        # Scenario B
+        "scB_enabled": False, "scB_name": "Scenario B", "scB_vol": 1.0, "scB_aht": 1.0,
+        "scB_ov_shrink": False, "scB_shrink": 0.35, "scB_ov_occ": False, "scB_occ": 0.85,
+        "scB_ov_sl": False, "scB_sl": 0.60, "scB_ov_thr": False, "scB_thr": 180,
+        # Scenario C
+        "scC_enabled": False, "scC_name": "Scenario C", "scC_vol": 1.0, "scC_aht": 1.0,
+        "scC_ov_shrink": False, "scC_shrink": 0.35, "scC_ov_occ": False, "scC_occ": 0.85,
+        "scC_ov_sl": False, "scC_sl": 0.60, "scC_ov_thr": False, "scC_thr": 180,
+        # Scenario D
+        "scD_enabled": False, "scD_name": "Scenario D", "scD_vol": 1.0, "scD_aht": 1.0,
+        "scD_ov_shrink": False, "scD_shrink": 0.35, "scD_ov_occ": False, "scD_occ": 0.85,
+        "scD_ov_sl": False, "scD_sl": 0.60, "scD_ov_thr": False, "scD_thr": 180,
+
         # --- Phase 13: cost analytics ---
         "cost_interval_df":        pd.DataFrame(),
         "cost_monthly_df":         pd.DataFrame(),

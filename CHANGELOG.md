@@ -1,4 +1,48 @@
 # Changelog
+## 2026-03-17 (Phase 14 — Scenario Planning Overhaul)
+
+### Changed
+ui/tab_scenarios.py: complete rewrite of Scenario Compare tab.
+
+Scenario editors:
+- Up to 4 named scenarios (A, B, C, D) + customisable baseline name
+- Each scenario: enable checkbox, name field, volume × slider, AHT × slider
+- Optional config overrides per scenario: shrinkage, occupancy cap, SL target,
+  SL threshold — unchecked = inherit live baseline cfg value
+- Expander header shows ✅/○ and current scenario name for quick scan
+- All 44 widget keys pre-registered in _init_session_state(); removed all
+  value= args to prevent widget state conflicts
+
+Erlang C (live):
+- Baseline + all enabled scenarios re-computed on every render (sub-second)
+- Side-by-side summary table: Peak net req, Peak paid req, Total calls,
+  Avg SL%, Avg occ%, Δ Peak net, Δ SL pp, Δ Occ pp vs baseline
+- Delta columns colour-coded: red = worse, green = better
+
+DES (on-demand):
+- "Run DES" button triggers DES v2 for baseline + active scenarios
+- Progress bar + per-scenario status text during run
+- DES settings expander: abandonment toggle, patience slider, patience dist
+- Results stored in sc_des_results session state key
+- DES summary table: Avg SL%, Avg ASA (s), Abandon rate%, Total calls,
+  Abandoned, Δ SL pp, Δ Abandon pp vs baseline
+
+Charts:
+- Three-panel Erlang interval chart: agent requirement, SL%, occupancy%
+- Optional DES interval charts (shown when DES was run): simulated SL%,
+  abandon rate% by interval
+- Consistent colour palette: Baseline=blue, A=orange, B=green, C=purple, D=red
+- Baseline solid line; scenarios dotted for visual differentiation
+
+Export:
+- Download expander: Erlang comparison CSV + DES comparison CSV (if run)
+
+app.py changes:
+- 44 Phase 14 session state keys registered in _DEFAULTS
+
+persistence/state_manager.py changes:
+- 44 Phase 14 widget defaults added to _DEFAULT_SETTINGS
+
 ## 2026-03-17 (Phase 13 — Cost & Financial Analytics)
 
 ### Added

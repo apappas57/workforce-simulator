@@ -34,7 +34,8 @@ Simulation design notes: see DES_NOTES.md
 | 11 | Demand forecasting | ✅ Complete |
 | 12 | PDF report export | ✅ Complete |
 | 13 | Cost & financial analytics | ✅ Complete |
-| 14 | — | 🔜 Next |
+| 14 | Scenario planning overhaul | ✅ Complete |
+| 15 | — | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -62,6 +63,15 @@ matplotlib Agg charts (no kaleido/Plotly dependency). Report tab added
 download button. df_erlang stored as report_erlang_df in session state
 after every compute cycle. reportlab==4.2.5 + matplotlib==3.9.4 added to
 requirements.txt.
+
+Phase 14 (scenario planning overhaul) delivered: complete rewrite of ui/tab_scenarios.py.
+Up to 4 named scenarios (A–D) + baseline. Erlang C runs live on every render.
+"Run DES" button triggers DES v2 for baseline + all active scenarios (no breaks,
+configurable abandonment + patience). Side-by-side summary table with Δ vs baseline
+columns (colour-coded red/green). Three-panel interval chart (agent req, SL%, occ%).
+Optional DES interval charts (simulated SL%, abandon rate%). CSV export for both
+Erlang and DES comparisons. All 44 widget keys pre-registered in _init_session_state()
+and persisted via state_manager. sc_des_results stored in session state (not persisted).
 
 Phase 13 (cost & financial analytics) delivered: CostConfig dataclass and per-interval
 cost engine (models/cost_model.py). Per-interval labour, idle, and SLA breach cost
