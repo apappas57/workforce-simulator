@@ -1,4 +1,50 @@
 # Changelog
+## 2026-03-17 (Phase 12 — PDF Report Export)
+
+### Added
+PDF report generation engine (reports/report_builder.py).
+
+ReportConfig dataclass:
+- org_name: organisation name on cover and document metadata
+- report_date: date shown on cover (defaults to today)
+- include_demand / include_des / include_roster / include_workforce:
+  toggle each section independently
+
+build_report(config, data) approach:
+- Cover page: title, org name, report date, table of contents
+- Section 1 — Demand & Erlang C: metrics table + calls/agents dual-axis
+  chart + SL & occupancy line chart
+- Section 2 — DES Results: metrics table + DES calls/wait bar+line chart
+  + daily summary table
+- Section 3 — Roster & Gaps: metrics table + grouped bar chart +
+  daily summary table
+- Section 4 — Workforce Planning & Hiring: headcount projection line
+  chart + projection table + optimal hires bar chart + optimisation table
+- Sections with no data include a placeholder note rather than crashing
+- Uses matplotlib.figure.Figure (non-interactive, Agg-safe — no kaleido)
+- reportlab Platypus (A4, 20 mm margins), navy/blue colour scheme
+
+Report tab (ui/tab_report.py):
+- Org name + report date inputs
+- Section checkboxes
+- Data readiness indicators for all five data sources
+- Generate button with st.spinner, download button
+- report_pdf_bytes stored in session state for the download button
+
+app.py changes:
+- import render_report_tab
+- report_erlang_df and report_pdf_bytes added to _DEFAULTS
+- df_erlang stored as st.session_state["report_erlang_df"] after every
+  compute cycle
+- "Report" tab added between Hiring Optimisation and Downloads (tabs[7])
+- Downloads renumbered to tabs[8]
+
+requirements.txt:
+- reportlab==4.2.5 (PDF layout engine)
+- matplotlib==3.9.4 (chart rendering, max stable for Python 3.9)
+
+---
+
 ## 2026-03-17 (Phase 11 — Demand Forecasting)
 
 ### Added

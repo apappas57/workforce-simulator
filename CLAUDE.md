@@ -32,7 +32,8 @@ Simulation design notes: see DES_NOTES.md
 | 9 | Platform development | ✅ Complete |
 | 10 | Authentication + deployment | ✅ Complete |
 | 11 | Demand forecasting | ✅ Complete |
-| 12 | PDF report export | 🔜 Next |
+| 12 | PDF report export | ✅ Complete |
+| 13 | — | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -49,6 +50,17 @@ Phase 9 (persistent state) delivered: file-based persistence layer
 values saved to state/settings.json on every run and restored on reload.
 Computed DataFrames (planning_projection, optimisation_result, etc.) saved as
 Parquet in state/ after each run. 20 unit tests added. state/ is git-ignored.
+
+Phase 12 (PDF report export) delivered: reportlab Platypus PDF engine
+(reports/report_builder.py). ReportConfig dataclass controls cover page
+(title, date, org name) and four toggleable sections: Demand & Erlang C,
+DES Simulation Results, Roster & Coverage Gaps, Workforce Planning &
+Hiring Optimisation. Each section renders metric summary tables and
+matplotlib Agg charts (no kaleido/Plotly dependency). Report tab added
+(ui/tab_report.py) with data readiness indicators, generate button, and
+download button. df_erlang stored as report_erlang_df in session state
+after every compute cycle. reportlab==4.2.5 + matplotlib==3.9.4 added to
+requirements.txt.
 
 Phase 11 (demand forecasting) delivered: STL-based demand forecasting engine
 (demand/demand_forecaster.py). Aggregates historical interval data to daily
@@ -103,6 +115,8 @@ Demand Input
 | `analysis/scenario_runner.py` | Scenario shock application |
 | `demand/demand_forecaster.py` | **Phase 11 forecasting engine** — ForecastParams dataclass + forecast_demand() |
 | `ui/tab_forecast.py` | Demand Forecast tab (Phase 11) |
+| `reports/report_builder.py` | **Phase 12 PDF engine** — ReportConfig dataclass + build_report() |
+| `ui/tab_report.py` | Report tab (Phase 12) |
 | `planning/workforce_planner.py` | **Phase 7 projection engine** — PlanningParams dataclass + project_workforce() |
 | `planning/hiring_loader.py` | Loaders for hiring_plan.csv and required_fte_plan.csv |
 | `optimisation/workforce_optimiser.py` | **Phase 8 LP engine** — OptimisationParams + optimise_hiring_plan() + optimise_scenarios() |
@@ -141,6 +155,8 @@ instead.
 | `optimisation_result` | DataFrame | tab_optimisation | tab_downloads |
 | `optimisation_scenarios` | DataFrame | tab_optimisation | tab_downloads |
 | `forecast_demand_df` | DataFrame or None | tab_forecast | app.py demand block |
+| `report_erlang_df` | DataFrame | app.py | tab_report |
+| `report_pdf_bytes` | bytes or None | tab_report | tab_report download button |
 
 ### Adding a key for a new phase
 

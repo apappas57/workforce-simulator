@@ -13,23 +13,23 @@ def render_sidebar():
         st.header("Core inputs")
         st.number_input(
             "Interval length (minutes)",
-            min_value=5, max_value=60, value=15, step=5,
+            min_value=5, max_value=60, step=5,
             key="sb_interval_minutes",
         )
         st.number_input(
             "AHT (seconds)",
-            min_value=30, max_value=3600, value=360, step=10,
+            min_value=30, max_value=3600, step=10,
             key="sb_aht_seconds",
         )
-        st.slider("Shrinkage %", 0.0, 0.6, 0.35, key="sb_shrinkage")
-        st.slider("Occupancy cap %", 0.5, 1.0, 0.85, key="sb_occupancy_cap")
+        st.slider("Shrinkage %", 0.0, 0.6, key="sb_shrinkage")
+        st.slider("Occupancy cap %", 0.5, 1.0, key="sb_occupancy_cap")
 
         st.divider()
         st.header("Service level target (Erlang C)")
-        st.slider("Target SL %", 0.0, 1.0, 0.60, key="sb_sl_target")
+        st.slider("Target SL %", 0.0, 1.0, key="sb_sl_target")
         st.number_input(
             "SL threshold (seconds)",
-            min_value=5, max_value=3600, value=180, step=5,
+            min_value=5, max_value=3600, step=5,
             key="sb_sl_threshold_seconds",
         )
 
@@ -55,7 +55,7 @@ def render_sidebar():
         use_synth = st.toggle("Use synthetic day instead", value=(uploaded is None))
         st.slider(
             "Avg calls per interval (synthetic)",
-            0, 500, 120,
+            0, 500,
             key="sb_avg_calls",
         )
 
@@ -86,7 +86,7 @@ def render_sidebar():
         st.header("Randomness")
         st.number_input(
             "Seed",
-            min_value=0, max_value=999999, value=42, step=1,
+            min_value=0, max_value=999999, step=1,
             key="sb_seed",
         )
 
@@ -95,14 +95,12 @@ def render_sidebar():
         st.selectbox(
             "Input start_ts time zone",
             ["UTC", "Australia/Melbourne"],
-            index=0,
             help="What timezone the CSV start_ts column is in.",
             key="sb_input_tz",
         )
         st.selectbox(
             "Model / display time zone",
             ["Australia/Melbourne", "UTC"],
-            index=0,
             help="Timezone used for interval bucketing, charts, and roster alignment.",
             key="sb_model_tz",
         )

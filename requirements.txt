@@ -15,9 +15,13 @@ plotly==6.6.0              # (direct) interactive charts
 pulp==3.3.0                # (direct) LP optimisation (shift optimiser)
 simpy==4.1.1               # (direct) discrete event simulation engine
 
+# --- Phase 12: PDF report export (direct) ---
+reportlab==4.2.5             # (direct) PDF generation (Platypus layout engine)
+matplotlib==3.9.4            # (direct) chart rendering to PNG for PDF embedding (Agg backend)
+
 # --- Phase 11: demand forecasting (direct) ---
 statsmodels==0.14.4          # (direct) STL decomposition and STLForecast + ETS
-scipy==1.14.1                # (direct) normal ppf for CI fallback in forecaster
+scipy==1.13.1                # (direct) normal ppf for CI fallback in forecaster (max for Python 3.9)
 
 # --- Phase 10: authentication + deployment (direct) ---
 streamlit-authenticator==0.3.3   # (direct) login screen with bcrypt-hashed credentials
@@ -30,7 +34,7 @@ altair==5.5.0
 blinker==1.9.0
 cachetools==6.2.6
 click==8.1.8
-gitdb==4.012
+gitdb==4.0.12
 gitpython==3.1.46
 jinja2==3.1.6
 markupsafe==3.0.3

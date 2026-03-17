@@ -16,6 +16,7 @@ from ui.tab_des import render_des_tab
 from ui.tab_downloads import render_downloads_tab
 from ui.tab_forecast import render_forecast_tab
 from ui.tab_optimisation import render_optimisation_tab
+from ui.tab_report import render_report_tab
 from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
@@ -82,6 +83,10 @@ def _init_session_state() -> None:
 
         # --- Phase 11: demand forecast ---
         "forecast_demand_df":      None,
+
+        # --- Phase 12: PDF report ---
+        "report_erlang_df":        pd.DataFrame(),
+        "report_pdf_bytes":        None,
     }
 
     for key, default in _DEFAULTS.items():
@@ -149,8 +154,7 @@ def _gate_login() -> None:
 
     creds_path = Path(__file__).parent / "auth" / "credentials.yaml"
     if not creds_path.exists():
-        # credentials.yaml not configured — allow access with a dev-mode notice
-        st.sidebar.warning("⚠️ auth/credentials.yaml not found — running without login.")
+        # credentials.yaml not configured — allow access silently (local dev mode)
         return
 
     with open(creds_path) as f:
@@ -261,6 +265,9 @@ if sidebar_inputs["staffing_uploaded"] is not None:
 df_det = deterministic_staffing(df_inputs, cfg)
 df_erlang = solve_staffing_erlang(df_det, cfg)
 
+# Phase 12: keep the current Erlang output accessible to the report tab.
+st.session_state["report_erlang_df"] = df_erlang
+
 tol_occ = 0.005
 tol_sl = 0.01
 
@@ -296,6 +303,7 @@ tabs = st.tabs([
     "Demand Forecast",
     "Workforce Planning",
     "Hiring Optimisation",
+    "Report",
     "Downloads",
 ])
 
@@ -320,4 +328,7 @@ with tabs[6]:
     render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[7]:
+    render_report_tab(df_erlang, cfg)
+
+with tabs[8]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)
