@@ -40,7 +40,24 @@ Simulation design notes: see DES_NOTES.md
 | 17 | Formatted Excel export | ✅ Complete |
 | 18 | Overview dashboard | ✅ Complete |
 | 19 | Gantt shift schedule visualisation | ✅ Complete |
-| 20 | — | 🔜 Next |
+| 20 | Caching layer | ✅ Complete |
+| 21 | Chart consistency pass | ✅ Complete |
+| 22 | — | 🔜 Next |
+
+Phase 21 (chart consistency pass) delivered: `ui/charts.py` created as shared
+chart utilities module. Contains `PALETTE` (8-colour indigo/zinc palette),
+semantic colour constants (`C_REQUIREMENT`, `C_ROSTER`, `C_SIMULATION`,
+`C_FORECAST`, `C_COST`), and `apply_dark_theme(fig)` which sets
+`paper_bgcolor`/`plot_bgcolor` to transparent, `gridcolor="#27272A"`, font to
+Inter, and title colour `#FAFAFA`. Applied to every `go.Figure` and `px.*`
+chart across all tabs: tab_demand, tab_des, tab_planning, tab_forecast,
+tab_optimisation, tab_cost, tab_scenarios, tab_multiqueue, tab_roster. All
+tabs now render with the unified zinc/indigo dark theme.
+
+Phase 20 (caching layer) delivered: `@st.cache_data` wrappers added in
+`app.py` for both expensive model calls — `deterministic_staffing()` and
+`solve_staffing_erlang()`. Cache keyed on DataFrame content + frozen
+`SimConfig`; reruns only when inputs change. Zero changes to model files.
 
 Phase 19 (Gantt shift schedule visualisation) delivered: `_render_shift_gantt()`
 added to ui/tab_roster.py. Plotly horizontal bar chart — one bar per active shift
@@ -197,6 +214,7 @@ Demand Input
 | `ui/tab_planning.py` | Workforce Planning tab (Phase 7) |
 | `ui/tab_optimisation.py` | Hiring Optimisation tab (Phase 8) |
 | `ui/date_view.py` | Shared date/interval view helpers + `ensure_x_col` |
+| `ui/charts.py` | **Phase 21 chart utilities** — `apply_dark_theme()`, `PALETTE`, semantic colour constants |
 | `ui/tab_overview.py` | **Phase 18 overview dashboard** — read-only KPI landing tab |
 | `utils/export.py` | CSV + ZIP export generation |
 | `utils/excel_export.py` | **Phase 17 Excel engine** — build_simulation_workbook() → formatted .xlsx bytes |
