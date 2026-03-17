@@ -19,6 +19,9 @@ simpy==4.1.1               # (direct) discrete event simulation engine
 reportlab==4.2.5             # (direct) PDF generation (Platypus layout engine)
 matplotlib==3.9.4            # (direct) chart rendering to PNG for PDF embedding (Agg backend)
 
+# --- Phase 17: formatted Excel export (direct) ---
+openpyxl==3.1.5              # (direct) .xlsx workbook creation with styling
+
 # --- Phase 11: demand forecasting (direct) ---
 statsmodels==0.14.4          # (direct) STL decomposition and STLForecast + ETS
 scipy==1.13.1                # (direct) normal ppf for CI fallback in forecaster (max for Python 3.9)

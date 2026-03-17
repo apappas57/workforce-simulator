@@ -1,4 +1,51 @@
 # Changelog
+
+## 2026-03-17 (Phase 17 — Formatted Excel Export)
+
+### Added
+utils/excel_export.py — openpyxl workbook builder:
+- `build_simulation_workbook()` returns formatted .xlsx as bytes
+- Sheets: Summary (KPI table), Demand, Erlang C, Roster, Simulation,
+  Planning, Optimisation, Cost — Interval, Cost — Monthly
+- Indigo header fill (#4F46E5), white bold text, freeze pane row 1
+- Alternating row shading (zinc-100), thin border on every cell
+- Auto-sized columns (capped at 40), min width 8
+- Per-column number format detection: %, $, integer, decimal, datetime
+- KPI extraction from Erlang, Planning, and Cost DataFrames for Summary sheet
+- Graceful fallback with RuntimeError if openpyxl unavailable
+
+ui/tab_downloads.py — rewritten:
+- Excel workbook download as primary action (type="primary" button)
+- Individual CSV downloads labelled with plain names
+- ZIP pack only shown when >2 CSV files available
+- cost_interval_df and cost_monthly_df added to pack
+- planning_hiring_plan added to individual downloads
+
+requirements.txt: openpyxl==3.1.5 added
+
+## 2026-03-17 (Phase 16 — Config Save / Load)
+
+### Added
+persistence/config_store.py:
+- `list_configs()` → sorted list of saved config names
+- `save_config(name, session_state)` → snapshots all sb_* keys to configs/{name}.json
+- `load_config(name)` → returns dict of restored sb_* key/value pairs
+- `delete_config(name)` → removes config file (silent no-op if absent)
+- `config_exists(name)` → bool check
+- Date keys (sb_planning_start_date, sb_opt_planning_start) serialised as ISO strings
+- Config name validation: alphanumeric + space/hyphen/underscore, max 64 chars
+- configs/ directory auto-created; IO errors caught and re-raised with logging
+
+ui/sidebar.py:
+- `_render_config_panel()` added — called inside `with st.sidebar:` block
+- "Save current settings" expander: name text input + Save button (overwrites if exists)
+- "Load or delete a config" expander: selectbox + Load / Delete buttons
+- Load restores all sb_* keys to session state then calls st.rerun()
+- Panel hidden when no configs exist (only Save expander shown)
+
+app.py:
+- 2 Phase 16 widget keys added to _DEFAULTS: sb_config_save_name, sb_config_select
+
 ## 2026-03-17 (Phase 15 — Multi-Queue Comparison)
 
 ### Added

@@ -36,7 +36,9 @@ Simulation design notes: see DES_NOTES.md
 | 13 | Cost & financial analytics | ✅ Complete |
 | 14 | Scenario planning overhaul | ✅ Complete |
 | 15 | Multi-queue comparison | ✅ Complete |
-| 16 | — | 🔜 Next |
+| 16 | Config save/load | ✅ Complete |
+| 17 | Formatted Excel export | ✅ Complete |
+| 18 | — | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -64,6 +66,21 @@ matplotlib Agg charts (no kaleido/Plotly dependency). Report tab added
 download button. df_erlang stored as report_erlang_df in session state
 after every compute cycle. reportlab==4.2.5 + matplotlib==3.9.4 added to
 requirements.txt.
+
+Phase 17 (formatted Excel export) delivered: openpyxl-based workbook builder
+(utils/excel_export.py). Multi-sheet .xlsx with styled headers (indigo fill, white
+text), alternating row shading, auto-sized columns, per-column number formats, freeze
+panes, and a KPI Summary sheet. Sheets: Summary, Demand, Erlang C, Roster, Simulation,
+Planning, Optimisation, Cost — Interval, Cost — Monthly. tab_downloads.py rewritten:
+Excel download as primary action, individual CSV downloads below, ZIP pack at bottom.
+Falls back gracefully when openpyxl is absent. openpyxl==3.1.5 added to requirements.txt.
+
+Phase 16 (config save/load) delivered: persistence/config_store.py stores named
+snapshots of all sb_* sidebar keys as JSON files in configs/. Public API:
+list_configs(), save_config(), load_config(), delete_config(), config_exists().
+Sidebar "Saved configs" section added: Save expander (name input + Save button),
+Load/Delete expander (selectbox + Load/Delete buttons). Load restores all sb_* keys
+to session state and calls st.rerun(). 2 widget keys pre-registered in _init_session_state().
 
 Phase 15 (multi-queue comparison) delivered: up to 3 independent queues modelled
 simultaneously (ui/tab_multiqueue.py). Each queue configures name, operating hours
@@ -162,6 +179,8 @@ Demand Input
 | `ui/tab_optimisation.py` | Hiring Optimisation tab (Phase 8) |
 | `ui/date_view.py` | Shared date/interval view helpers + `ensure_x_col` |
 | `utils/export.py` | CSV + ZIP export generation |
+| `utils/excel_export.py` | **Phase 17 Excel engine** — build_simulation_workbook() → formatted .xlsx bytes |
+| `persistence/config_store.py` | **Phase 16 config store** — save/load/delete named sb_* snapshots in configs/ |
 
 ---
 

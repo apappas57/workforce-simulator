@@ -1,5 +1,75 @@
 import streamlit as st
 
+from persistence.config_store import (
+    config_exists,
+    delete_config,
+    list_configs,
+    load_config,
+    save_config,
+)
+
+
+def _render_config_panel() -> None:
+    """Render the Save / Load config panel at the bottom of the sidebar."""
+    st.divider()
+    st.header("Saved configs")
+
+    configs = list_configs()
+
+    # ── Save ──────────────────────────────────────────────────────────────────
+    with st.expander("Save current settings", expanded=False):
+        name_input = st.text_input(
+            "Config name",
+            placeholder="e.g. Peak Season — High AHT",
+            key="sb_config_save_name",
+        )
+        overwrite_warn = name_input.strip() and config_exists(name_input.strip())
+        if overwrite_warn:
+            st.caption(f"⚠ A config named **{name_input.strip()}** already exists — saving will overwrite it.")
+
+        if st.button("Save", key="sb_config_save_btn", type="primary"):
+            label = name_input.strip()
+            if not label:
+                st.error("Enter a name before saving.")
+            else:
+                try:
+                    save_config(label, st.session_state)
+                    st.success(f"Saved: **{label}**")
+                except ValueError as exc:
+                    st.error(str(exc))
+
+    # ── Load / Delete ─────────────────────────────────────────────────────────
+    if configs:
+        with st.expander("Load or delete a config", expanded=False):
+            selected = st.selectbox(
+                "Select config",
+                configs,
+                key="sb_config_select",
+            )
+
+            col_load, col_del = st.columns(2)
+
+            with col_load:
+                if st.button("Load", key="sb_config_load_btn", type="primary"):
+                    try:
+                        settings = load_config(selected)
+                        # Write values back into session state — widgets
+                        # will pick them up on the next render pass.
+                        for k, v in settings.items():
+                            st.session_state[k] = v
+                        st.success(f"Loaded: **{selected}**")
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(f"Load failed: {exc}")
+
+            with col_del:
+                if st.button("Delete", key="sb_config_delete_btn"):
+                    delete_config(selected)
+                    st.success(f"Deleted: **{selected}**")
+                    st.rerun()
+    else:
+        st.caption("No saved configs yet. Save your current settings above.")
+
 
 def render_sidebar():
     """Render the global sidebar and return all input values.
@@ -176,6 +246,9 @@ def render_sidebar():
             help="Timezone used for interval bucketing, charts, and roster alignment.",
             key="sb_model_tz",
         )
+
+        # Phase 16: saved config panel
+        _render_config_panel()
 
     # --- Cost config: convert annualised rate to hourly if needed ---------- #
     _rate_type  = st.session_state.get("sb_cost_rate_type", "Hourly ($/hr)")

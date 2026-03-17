@@ -138,6 +138,10 @@ def _init_session_state() -> None:
         "sb_penalty_per_abandoned": 8.0,
         "sb_idle_rate_fraction":   1.0,
 
+        # --- Phase 16: config save/load sidebar widget state ---
+        "sb_config_save_name":     "",
+        "sb_config_select":        None,
+
         # --- Roster template widget defaults (tab_roster.py, fixed 6-row grid) ---
         # Pre-registered here so widgets never receive both value= and key= simultaneously.
         "tpl_start_0": "08:00", "tpl_dur_0": 486, "tpl_heads_0": 60, "tpl_use_0": True,
@@ -176,7 +180,7 @@ def _init_session_state() -> None:
 
 st.set_page_config(
     page_title="Workforce Simulator",
-    page_icon="📊",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -188,18 +192,18 @@ def _inject_css() -> None:
 <style>
 /* ── Palette ──────────────────────────────────────────────────────────────── */
 :root {
-    --bg:        #0D1117;
-    --bg2:       #161C26;
-    --bg3:       #1E2836;
-    --navy:      #1B2A4A;
-    --blue:      #2C6FAC;
-    --blue-lt:   #4A8FCC;
-    --border:    #243044;
-    --text:      #E8EDF2;
-    --text-mute: #8A9BBE;
-    --green:     #27AE60;
-    --red:       #E74C3C;
-    --amber:     #E67E22;
+    --bg:        #09090B;
+    --bg2:       #18181B;
+    --bg3:       #232329;
+    --navy:      #18181B;
+    --blue:      #6366F1;
+    --blue-lt:   #818CF8;
+    --border:    #3F3F46;
+    --text:      #FAFAFA;
+    --text-mute: #A1A1AA;
+    --green:     #22C55E;
+    --red:       #EF4444;
+    --amber:     #F59E0B;
 }
 
 /* ── Global font & background ─────────────────────────────────────────────── */
@@ -216,7 +220,7 @@ html, body, [class*="css"] {
 
 /* ── Sidebar ──────────────────────────────────────────────────────────────── */
 [data-testid="stSidebar"] {
-    background-color: #111827 !important;
+    background-color: var(--bg2) !important;
     border-right: 1px solid var(--border);
 }
 [data-testid="stSidebar"] .block-container {
@@ -292,7 +296,7 @@ html, body, [class*="css"] {
 
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 [data-testid="stButton"] > button[kind="primary"] {
-    background: linear-gradient(135deg, var(--blue), #1a5a96);
+    background: linear-gradient(135deg, var(--blue), #4F46E5);
     border: none;
     border-radius: 6px;
     color: #fff;
@@ -300,11 +304,11 @@ html, body, [class*="css"] {
     letter-spacing: 0.02em;
     padding: 0.45rem 1.2rem;
     transition: opacity 0.15s, box-shadow 0.15s;
-    box-shadow: 0 2px 8px rgba(44, 111, 172, 0.35);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
 }
 [data-testid="stButton"] > button[kind="primary"]:hover {
     opacity: 0.9;
-    box-shadow: 0 4px 14px rgba(44, 111, 172, 0.5);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.6);
 }
 [data-testid="stButton"] > button[kind="secondary"] {
     background-color: var(--bg3);
@@ -497,17 +501,14 @@ _inject_css()
 # ---------------------------------------------------------------------------
 
 st.markdown("""
-<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.25rem;">
-    <span style="font-size:1.6rem;">📊</span>
-    <div>
-        <div style="font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;
-                    color:#E8EDF2;line-height:1.1;">
-            Workforce Simulator
-        </div>
-        <div style="font-size:0.72rem;color:#8A9BBE;letter-spacing:0.06em;
-                    text-transform:uppercase;font-weight:600;">
-            Call Centre Planning &amp; Optimisation Platform
-        </div>
+<div style="margin-bottom:0.25rem;">
+    <div style="font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;
+                color:#FAFAFA;line-height:1.1;">
+        Workforce Simulator
+    </div>
+    <div style="font-size:0.7rem;color:#A1A1AA;letter-spacing:0.08em;
+                text-transform:uppercase;font-weight:600;margin-top:2px;">
+        Call Centre Planning &amp; Optimisation
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -622,17 +623,17 @@ if sidebar_inputs["staffing_uploaded"] is not None and staffing_df is not None:
     s3.metric("Staffing days", staffing_df["date_local"].nunique())
 
 tabs = st.tabs([
-    "Demand + Requirement",
-    "Roster + Gaps + Optimiser",
-    "DES validation",
-    "Scenario Compare",
+    "Demand",
+    "Roster",
+    "Simulation",
+    "Scenarios",
     "Multi-Queue",
-    "Demand Forecast",
-    "Workforce Planning",
-    "Hiring Optimisation",
-    "Cost Analytics",
+    "Forecast",
+    "Planning",
+    "Optimisation",
+    "Cost",
     "Report",
-    "Downloads",
+    "Exports",
 ])
 
 with tabs[0]:
