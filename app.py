@@ -174,7 +174,244 @@ def _init_session_state() -> None:
             st.session_state[key] = df
 
 
-st.set_page_config(page_title="Call Centre Workforce Simulator", layout="wide")
+st.set_page_config(
+    page_title="Workforce Simulator",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+def _inject_css() -> None:
+    """Inject global dark-professional CSS overrides."""
+    st.markdown("""
+<style>
+/* ── Palette ──────────────────────────────────────────────────────────────── */
+:root {
+    --bg:        #0D1117;
+    --bg2:       #161C26;
+    --bg3:       #1E2836;
+    --navy:      #1B2A4A;
+    --blue:      #2C6FAC;
+    --blue-lt:   #4A8FCC;
+    --border:    #243044;
+    --text:      #E8EDF2;
+    --text-mute: #8A9BBE;
+    --green:     #27AE60;
+    --red:       #E74C3C;
+    --amber:     #E67E22;
+}
+
+/* ── Global font & background ─────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* Main content area */
+.main .block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+[data-testid="stSidebar"] {
+    background-color: #111827 !important;
+    border-right: 1px solid var(--border);
+}
+[data-testid="stSidebar"] .block-container {
+    padding-top: 1.5rem;
+}
+[data-testid="stSidebar"] hr {
+    border-color: var(--border);
+    margin: 0.8rem 0;
+}
+/* Sidebar section headers */
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: var(--blue-lt) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 0.3rem !important;
+}
+
+/* ── Tab bar ──────────────────────────────────────────────────────────────── */
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    background-color: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 0.5rem;
+    gap: 2px;
+}
+[data-testid="stTabs"] [data-baseweb="tab"] {
+    background-color: transparent;
+    color: var(--text-mute);
+    border-radius: 4px 4px 0 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+}
+[data-testid="stTabs"] [aria-selected="true"] {
+    color: var(--blue-lt) !important;
+    border-bottom: 2px solid var(--blue-lt) !important;
+    background-color: rgba(44, 111, 172, 0.10) !important;
+}
+[data-testid="stTabs"] [data-baseweb="tab"]:hover {
+    color: var(--text) !important;
+    background-color: rgba(255,255,255,0.04) !important;
+}
+[data-testid="stTabs"] [data-baseweb="tab-panel"] {
+    padding-top: 1.2rem;
+}
+
+/* ── Metric cards ─────────────────────────────────────────────────────────── */
+[data-testid="stMetric"] {
+    background-color: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: var(--text-mute) !important;
+}
+[data-testid="stMetricValue"] {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: var(--text) !important;
+    line-height: 1.2 !important;
+}
+[data-testid="stMetricDelta"] svg { display: none; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+[data-testid="stButton"] > button[kind="primary"] {
+    background: linear-gradient(135deg, var(--blue), #1a5a96);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.45rem 1.2rem;
+    transition: opacity 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(44, 111, 172, 0.35);
+}
+[data-testid="stButton"] > button[kind="primary"]:hover {
+    opacity: 0.9;
+    box-shadow: 0 4px 14px rgba(44, 111, 172, 0.5);
+}
+[data-testid="stButton"] > button[kind="secondary"] {
+    background-color: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-weight: 500;
+}
+[data-testid="stButton"] > button[kind="secondary"]:hover {
+    border-color: var(--blue);
+    color: var(--blue-lt);
+}
+
+/* ── Dataframes / tables ──────────────────────────────────────────────────── */
+[data-testid="stDataFrame"] > div,
+[data-testid="stDataFrameResizable"] {
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    overflow: hidden;
+}
+
+/* ── Expanders ────────────────────────────────────────────────────────────── */
+[data-testid="stExpander"] {
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    background-color: var(--bg2) !important;
+    margin-bottom: 0.4rem;
+}
+[data-testid="stExpander"] summary {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-mute);
+    padding: 0.6rem 0.8rem;
+}
+[data-testid="stExpander"] summary:hover {
+    color: var(--text);
+}
+
+/* ── Alerts / info boxes ──────────────────────────────────────────────────── */
+[data-testid="stAlert"] {
+    border-radius: 6px;
+    border-left-width: 3px;
+}
+
+/* ── Dividers ─────────────────────────────────────────────────────────────── */
+hr {
+    border-color: var(--border) !important;
+    margin: 1rem 0;
+}
+
+/* ── Subheaders ───────────────────────────────────────────────────────────── */
+h2 {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: var(--text) !important;
+    letter-spacing: -0.01em;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem !important;
+}
+h3 {
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    color: var(--text-mute) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 1.2rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* ── Captions ─────────────────────────────────────────────────────────────── */
+[data-testid="stCaptionContainer"] p {
+    color: var(--text-mute) !important;
+    font-size: 0.75rem !important;
+}
+
+/* ── Input widgets ────────────────────────────────────────────────────────── */
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input {
+    background-color: var(--bg3) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 5px !important;
+    color: var(--text) !important;
+}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stNumberInput"] input:focus {
+    border-color: var(--blue) !important;
+    box-shadow: 0 0 0 2px rgba(44,111,172,0.25) !important;
+}
+[data-baseweb="select"] {
+    background-color: var(--bg3) !important;
+    border-color: var(--border) !important;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+/* ── Top bar (hamburger area) ─────────────────────────────────────────────── */
+[data-testid="stHeader"] {
+    background-color: var(--bg) !important;
+    border-bottom: 1px solid var(--border);
+}
+</style>
+""", unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -253,12 +490,27 @@ def _gate_login() -> None:
 
 _gate_deployment_key()
 _gate_login()
+_inject_css()
 
 # ---------------------------------------------------------------------------
 # Main application
 # ---------------------------------------------------------------------------
 
-st.title("Call Centre Workforce Simulator — Interval Model + Erlang + Roster + DES")
+st.markdown("""
+<div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.25rem;">
+    <span style="font-size:1.6rem;">📊</span>
+    <div>
+        <div style="font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;
+                    color:#E8EDF2;line-height:1.1;">
+            Workforce Simulator
+        </div>
+        <div style="font-size:0.72rem;color:#8A9BBE;letter-spacing:0.06em;
+                    text-transform:uppercase;font-weight:600;">
+            Call Centre Planning &amp; Optimisation Platform
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 _init_session_state()
 
