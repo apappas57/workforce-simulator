@@ -88,6 +88,8 @@ _DEFAULT_SETTINGS: dict = {
     "opt_cost_deficit":             1500.0,
     "opt_max_hires":                20,
     "opt_attrition_variance":       2.0,
+    # Demand tab (key= values in tab_demand.py)
+    "demand_activity_shrinkage_pct": 0.15,
 }
 
 

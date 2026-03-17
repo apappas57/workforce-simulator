@@ -29,7 +29,7 @@ Simulation design notes: see DES_NOTES.md
 | 6 | Workforce supply model + observed shrinkage | ✅ Complete |
 | 7 | Strategic workforce planning | ✅ Complete |
 | 8 | Optimisation engine | ✅ Complete |
-| 9 | Platform development | 🔄 In progress |
+| 9 | Platform development | ✅ Complete |
 | 10 | Authentication + deployment | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
