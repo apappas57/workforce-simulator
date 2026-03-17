@@ -26,6 +26,7 @@ from plotly.subplots import make_subplots
 from config.sim_config import SimConfig
 from models.deterministic import deterministic_staffing
 from models.erlang import solve_staffing_erlang
+from ui.charts import apply_dark_theme
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -225,12 +226,9 @@ def _render_charts(
         xaxis_title="Interval",
         yaxis_title="Agents required",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="white", paper_bgcolor="white",
-        margin=dict(t=80, b=40),
         height=380,
     )
-    fig1.update_yaxes(gridcolor="#F0F0F0")
-    fig1.update_xaxes(gridcolor="#F0F0F0")
+    apply_dark_theme(fig1)
     st.plotly_chart(fig1, use_container_width=True)
 
     # ── Chart 2: SL% and occupancy per queue (2-panel) ── #
@@ -276,11 +274,10 @@ def _render_charts(
     fig2.update_layout(
         height=480,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        plot_bgcolor="white", paper_bgcolor="white",
         margin=dict(t=80, b=40),
     )
-    fig2.update_yaxes(gridcolor="#F0F0F0")
-    fig2.update_xaxes(gridcolor="#F0F0F0", row=2, col=1, title_text="Interval")
+    apply_dark_theme(fig2)
+    fig2.update_xaxes(title_text="Interval", row=2, col=1)
     fig2.update_yaxes(title_text="SL %",  row=1, col=1)
     fig2.update_yaxes(title_text="Occ %", row=2, col=1)
     st.plotly_chart(fig2, use_container_width=True)

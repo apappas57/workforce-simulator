@@ -51,6 +51,7 @@ from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
 from ui.tab_multiqueue import render_multiqueue_tab
+from ui.tab_blended import render_blended_tab
 try:
     from supply.staffing_loader import load_staffing_csv, validate_staffing_data
     _staffing_loader_available = True
@@ -135,6 +136,30 @@ def _init_session_state() -> None:
         "mq_q3_enabled": False, "mq_q3_name": "Queue 3", "mq_q3_open": "09:00", "mq_q3_close": "17:00",
         "mq_q3_vol_pct": 40.0,  "mq_q3_aht": 240.0, "mq_q3_sl_target": 0.80, "mq_q3_sl_threshold": 20.0,
         "mq_q3_shrinkage": 0.35, "mq_q3_occ_cap": 0.85,
+
+        # --- Phase 24B: blended queues tab ---
+        "bl_n_queues":  2,
+        "bl_n_groups":  2,
+        # Queue 1 defaults
+        "bl_q1_name": "Sales",       "bl_q1_calls": 80.0,  "bl_q1_aht": 300.0,
+        "bl_q1_sl_target": 80,       "bl_q1_sl_threshold": 20.0,
+        "bl_q1_shrinkage": 30,       "bl_q1_patience": 180.0,
+        # Queue 2 defaults
+        "bl_q2_name": "Support",     "bl_q2_calls": 50.0,  "bl_q2_aht": 420.0,
+        "bl_q2_sl_target": 90,       "bl_q2_sl_threshold": 30.0,
+        "bl_q2_shrinkage": 30,       "bl_q2_patience": 240.0,
+        # Queue 3 defaults (used when n_queues=3)
+        "bl_q3_name": "Complaints",  "bl_q3_calls": 20.0,  "bl_q3_aht": 600.0,
+        "bl_q3_sl_target": 85,       "bl_q3_sl_threshold": 60.0,
+        "bl_q3_shrinkage": 30,       "bl_q3_patience": 300.0,
+        # Skill group defaults
+        "bl_g1_name": "Dedicated",   "bl_g1_queues": [],   "bl_g1_headcount": 10,
+        "bl_g2_name": "Blended",     "bl_g2_queues": [],   "bl_g2_headcount": 5,
+        "bl_g3_name": "Group 3",     "bl_g3_queues": [],   "bl_g3_headcount": 0,
+        # DES control
+        "bl_num_intervals": 96,
+        # DES results (non-persisted)
+        "blended_des_results": [],
 
         # --- Phase 14: scenario planning ---
         "sc_des_results":          {},    # dict: scenario_name → DES summary
@@ -720,6 +745,7 @@ tabs = st.tabs([
     "Simulation",
     "Scenarios",
     "Multi-Queue",
+    "Blended Queues",
     "Forecast",
     "Planning",
     "Optimisation",
@@ -750,19 +776,22 @@ with tabs[6]:
     render_multiqueue_tab(df_inputs, cfg)
 
 with tabs[7]:
-    render_forecast_tab()
+    render_blended_tab(cfg)
 
 with tabs[8]:
-    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_forecast_tab()
 
 with tabs[9]:
-    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[10]:
-    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
+    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[11]:
-    render_report_tab(df_erlang, cfg)
+    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
 
 with tabs[12]:
+    render_report_tab(df_erlang, cfg)
+
+with tabs[13]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)

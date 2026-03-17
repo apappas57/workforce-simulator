@@ -1,4 +1,5 @@
 from typing import Dict, List
+from ui.charts import apply_dark_theme, PALETTE
 
 import numpy as np
 import plotly.express as px
@@ -136,6 +137,7 @@ def _render_shift_gantt(
         ),
     )
 
+    apply_dark_theme(fig)
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     # ── Coverage vs requirement line chart ────────────────────────────────────
@@ -197,6 +199,7 @@ def _render_shift_gantt(
             font=dict(size=10),
         ),
     )
+    apply_dark_theme(fig2)
     st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
 def _build_roster_daily_summary(df: pd.DataFrame, req_col: str) -> pd.DataFrame:

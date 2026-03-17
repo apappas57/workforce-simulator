@@ -21,6 +21,7 @@ from plotly.subplots import make_subplots
 
 from analysis.scenario_runner import run_scenario
 from config.sim_config import SimConfig
+from ui.charts import apply_dark_theme
 from models.deterministic import deterministic_staffing
 from models.erlang import solve_staffing_erlang
 
@@ -378,11 +379,9 @@ def _render_interval_charts(
         height=600,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=80, b=40),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
     )
-    fig.update_yaxes(gridcolor="#F0F0F0")
-    fig.update_xaxes(gridcolor="#F0F0F0", row=n_rows, col=1, title_text="Interval")
+    apply_dark_theme(fig)
+    fig.update_xaxes(title_text="Interval", row=n_rows, col=1)
     fig.update_yaxes(title_text="Agents", row=1, col=1)
     fig.update_yaxes(title_text="SL %", row=2, col=1)
     fig.update_yaxes(title_text="Occ %", row=3, col=1)
@@ -433,9 +432,8 @@ def _render_interval_charts(
         height=420,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(t=80, b=40),
-        plot_bgcolor="white", paper_bgcolor="white",
     )
-    fig2.update_yaxes(gridcolor="#F0F0F0")
+    apply_dark_theme(fig2)
     fig2.update_yaxes(title_text="SL %",      row=1, col=1)
     fig2.update_yaxes(title_text="Abandon %", row=2, col=1)
     st.plotly_chart(fig2, use_container_width=True)

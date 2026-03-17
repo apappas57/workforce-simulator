@@ -44,7 +44,9 @@ Simulation design notes: see DES_NOTES.md
 | 21 | Chart consistency pass | ✅ Complete |
 | 22 | Quick Erlang C calculator | ✅ Complete |
 | 23 | Deployment hardening | ✅ Complete |
-| 24 | — | 🔜 Next |
+| 24A | Test coverage (phases 13–23) | ✅ Complete |
+| 24B | Multi-skill blended routing | ✅ Complete |
+| 25 | — | 🔜 Next |
 
 Phase 23 (deployment hardening) delivered: end-to-end cloud deployment support
 for Railway and Render. `render.yaml` and `railway.toml` platform config files
@@ -60,6 +62,42 @@ so named config snapshots survive container rebuilds. `.env.example` updated wit
 `CREDENTIALS_YAML_B64` variable and generation instructions. README updated with
 Option C (Render) and Option D (Railway) deployment sections. Local Docker and
 local Python flows are completely unchanged.
+
+Phase 24A (test coverage) delivered: unit test modules added for four previously
+untested phases. `tests/test_cost_model.py` — 31 tests covering `CostConfig`
+defaults, `calculate_interval_costs()` (labour, idle, breach, DES override, edge
+cases), `calculate_cost_summary()`, and `project_monthly_labour_cost()`.
+`tests/test_config_store.py` — 18 tests covering list/save/load/delete round-trips,
+name validation, date serialisation, and `config_exists()`, all using
+`tempfile.TemporaryDirectory` + `patch.multiple`. `tests/test_excel_export.py` —
+8 tests (skipped without openpyxl) verifying bytes output, valid .xlsx structure,
+required sheets, and graceful empty-input handling; plus an always-run fallback test
+checking `RuntimeError` is raised when openpyxl is absent. `tests/test_charts.py` —
+26 tests covering `PALETTE` (length, format), semantic colour constants, and
+`apply_dark_theme()` (bgcolor, grid colour, font, title colour); all chart test
+classes use `@skipUnless` guards for both plotly and `ui.charts` importability.
+
+Phase 24B (multi-skill blended routing) delivered: analytical and simulation models
+for comparing siloed vs. fully-blended agent pool staffing. `models/multi_skill.py`
+— `QueueSpec` dataclass (per-interval queue definition with derived `traffic_intensity`,
+`interval_seconds`, `sl_target_fraction`, `shrinkage_fraction`), `SkillGroup`
+dataclass (`can_serve()` method), `solve_blended_erlang(queues)` (returns DataFrame
+with per-queue siloed Erlang C rows + "── Blended total ──" summary showing
+`blended_net_agents`, `blended_paid_agents`, `blended_sl_pct`, `pooling_benefit_net`),
+and `pooling_benefit_agents(df)` scalar extractor. Blended pool uses combined offered
+load, traffic-weighted AHT, traffic-weighted SL target, and most-demanding threshold
+(conservative). `simulation/des_multi_queue.py` — standalone multi-queue multi-skill
+DES (intentionally bypasses `des_runner.py` — see architectural note below). One
+`simpy.Resource` per skill group; calls race eligible groups via `simpy.AnyOf`;
+dedicated-first routing (ascending queue-count sort); abandonment via `env.timeout`
+race; untriggered requests cancelled via `resource.release(req)` (correct simpy 4.1.1
+pattern). Returns `list[MultiQueueSimResult]`. `ui/tab_blended.py` — Blended Queues
+tab with queue editors (2–3 queues), Erlang C siloed vs. blended summary metrics and
+table, comparison bar chart, skill group editors (1–3 groups), DES run button (disabled
+without simpy or zero headcount), per-queue DES results (metrics + SL vs target bar
+chart). `tests/test_multi_skill.py` — 33 tests covering `QueueSpec`, `SkillGroup`,
+`solve_blended_erlang()`, and `pooling_benefit_agents()`. `app.py` updated: import,
+`bl_*` session state defaults, "Blended Queues" tab at index 7, tabs 8–13 renumbered.
 
 Phase 22 (quick Erlang C calculator) delivered: `ui/tab_quickcalc.py` —
 self-contained single-interval calculator tab (no sidebar dependency, no CSV
@@ -245,6 +283,9 @@ Demand Input
 | `ui/charts.py` | **Phase 21 chart utilities** — `apply_dark_theme()`, `PALETTE`, semantic colour constants |
 | `ui/tab_quickcalc.py` | **Phase 22 quick calculator** — self-contained single-interval Erlang C calculator |
 | `ui/tab_overview.py` | **Phase 18 overview dashboard** — read-only KPI landing tab |
+| `models/multi_skill.py` | **Phase 24B** — `QueueSpec`, `SkillGroup`, `solve_blended_erlang()`, `pooling_benefit_agents()` |
+| `simulation/des_multi_queue.py` | **Phase 24B** — standalone multi-queue multi-skill DES; `MultiQueueSimResult` + `simulate_multi_queue()` |
+| `ui/tab_blended.py` | **Phase 24B** — Blended Queues tab; queue editors, Erlang C comparison, skill group editors, DES validation |
 | `render.yaml` | **Phase 23** — Render.com deployment blueprint (Docker, persistent disk, env vars) |
 | `railway.toml` | **Phase 23** — Railway deployment config (Dockerfile build, healthcheck, restart policy) |
 | `utils/export.py` | CSV + ZIP export generation |
@@ -315,6 +356,7 @@ imported with a try/except shim.
 | `tests/test_config_store.py` | Phase 16 config store — 18 tests |
 | `tests/test_excel_export.py` | Phase 17 Excel export — 8 tests (openpyxl required; fallback test always runs) |
 | `tests/test_charts.py` | Phase 21 chart utilities — 26 tests (22 skip without plotly) |
+| `tests/test_multi_skill.py` | Phase 24B blended staffing model — 33 tests |
 
 Run locally:
 ```bash
@@ -359,9 +401,16 @@ pulp 3.x both had breaking API changes in recent major versions.
 These were made deliberately. Do not change them without understanding the
 rationale.
 
-**`des_runner.py` is the only DES entry point.** The UI, solver, and scenario
-runner all call `run_des_engine()` from `des_runner.py`. Never call
-`simulate_day_des` or `simulate_day_des_v2` directly from tab code.
+**`des_runner.py` is the only DES entry point** for single-queue simulations. The UI,
+solver, and scenario runner all call `run_des_engine()` from `des_runner.py`. Never
+call `simulate_day_des` or `simulate_day_des_v2` directly from tab code.
+
+**`des_multi_queue.py` is a deliberate exception to the above rule.** The Phase 24B
+multi-queue simulation (`simulation/des_multi_queue.py`) does NOT route through
+`des_runner.py`. Multi-queue routing requires per-group `simpy.Resource` objects,
+`simpy.AnyOf` racing, and cross-queue competition — fundamentally different process
+topology from the single-queue DES interface. Forcing it through `des_runner.py`
+would distort the model. `ui/tab_blended.py` calls `simulate_multi_queue()` directly.
 
 **`SimConfig` is frozen.** The dataclass uses `frozen=True`. Config is
 constructed once in `app.py` from sidebar inputs and passed down. No tab

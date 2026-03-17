@@ -24,18 +24,19 @@ from models.cost_model import (
     calculate_interval_costs,
     project_monthly_labour_cost,
 )
+from ui.charts import C_COST, C_REQUIREMENT, C_ROSTER, C_SIMULATION, C_FORECAST, apply_dark_theme
 from ui.date_view import apply_date_view, ensure_x_col, render_date_view_controls
 
 
 # ---------------------------------------------------------------------------
-# Colour constants (kept consistent with the rest of the app)
+# Colour constants
 # ---------------------------------------------------------------------------
-_NAVY   = "#1B2A4A"
-_BLUE   = "#2C6FAC"
-_RED    = "#E74C3C"
-_AMBER  = "#E67E22"
-_GREEN  = "#27AE60"
-_LTBLUE = "#AED6F1"
+_BLUE   = C_ROSTER
+_RED    = C_REQUIREMENT
+_AMBER  = C_FORECAST
+_GREEN  = C_SIMULATION
+_LTBLUE = "#818CF8"
+_NAVY   = C_COST
 
 
 def render_cost_tab(
@@ -152,10 +153,8 @@ def render_cost_tab(
         yaxis_title="Cost ($)",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=320,
-        margin=dict(t=10, b=40),
-        plot_bgcolor="white",
-        yaxis=dict(gridcolor="#F0F0F0"),
     )
+    apply_dark_theme(fig_bar)
     st.plotly_chart(fig_bar, use_container_width=True)
 
     # ------------------------------------------------------------------
@@ -184,13 +183,12 @@ def render_cost_tab(
 
     fig_cpc.update_layout(
         xaxis_title="Interval",
-        yaxis=dict(title="Cost / call ($)", side="left",  gridcolor="#F0F0F0"),
+        yaxis=dict(title="Cost / call ($)", side="left"),
         yaxis2=dict(title="Agents", side="right", overlaying="y", showgrid=False),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         height=280,
-        margin=dict(t=10, b=40),
-        plot_bgcolor="white",
     )
+    apply_dark_theme(fig_cpc)
     st.plotly_chart(fig_cpc, use_container_width=True)
 
     # ------------------------------------------------------------------
@@ -225,13 +223,12 @@ def render_cost_tab(
         ))
         fig_idle.update_layout(
             xaxis_title="Interval",
-            yaxis=dict(title="Idle cost ($)", gridcolor="#F0F0F0"),
+            yaxis=dict(title="Idle cost ($)"),
             yaxis2=dict(title="Surplus agents", overlaying="y", side="right", showgrid=False),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=260,
-            margin=dict(t=10, b=40),
-            plot_bgcolor="white",
         )
+        apply_dark_theme(fig_idle)
         st.plotly_chart(fig_idle, use_container_width=True)
         st.caption(
             f"Idle cost is **{idle_pct:.1f}%** of total labour cost. "
@@ -288,14 +285,13 @@ def render_cost_tab(
 
         fig_m.update_layout(
             xaxis_title="Period",
-            yaxis=dict(title="Labour cost ($)", gridcolor="#F0F0F0"),
+            yaxis=dict(title="Labour cost ($)"),
             yaxis2=dict(title="Cost gap ($)", overlaying="y", side="right", showgrid=False),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=320,
-            margin=dict(t=10, b=40),
-            plot_bgcolor="white",
             barmode="group",
         )
+        apply_dark_theme(fig_m)
         st.plotly_chart(fig_m, use_container_width=True)
 
         total_proj = monthly_df.get("monthly_labour_cost", pd.Series([0])).sum()
