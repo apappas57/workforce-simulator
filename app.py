@@ -11,6 +11,7 @@ from models.deterministic import deterministic_staffing
 from models.erlang import solve_staffing_erlang
 from persistence import state_manager
 from ui.sidebar import render_sidebar
+from ui.tab_overview import render_overview_tab
 from ui.tab_demand import render_demand_tab
 from ui.tab_des import render_des_tab
 from ui.tab_downloads import render_downloads_tab
@@ -623,6 +624,7 @@ if sidebar_inputs["staffing_uploaded"] is not None and staffing_df is not None:
     s3.metric("Staffing days", staffing_df["date_local"].nunique())
 
 tabs = st.tabs([
+    "Overview",
     "Demand",
     "Roster",
     "Simulation",
@@ -637,33 +639,37 @@ tabs = st.tabs([
 ])
 
 with tabs[0]:
-    render_demand_tab(df_inputs, df_erlang, staffing_df=staffing_df)
+    render_overview_tab(df_inputs, df_erlang, roster_df=None)
 
 with tabs[1]:
-    roster_df = render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=staffing_df)
+    render_demand_tab(df_inputs, df_erlang, staffing_df=staffing_df)
+
 with tabs[2]:
-    render_des_tab(df_det, roster_df, cfg, staffing_df=staffing_df)
+    roster_df = render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=staffing_df)
 
 with tabs[3]:
-    render_scenarios_tab(df_inputs, cfg)
+    render_des_tab(df_det, roster_df, cfg, staffing_df=staffing_df)
 
 with tabs[4]:
-    render_multiqueue_tab(df_inputs, cfg)
+    render_scenarios_tab(df_inputs, cfg)
 
 with tabs[5]:
-    render_forecast_tab()
+    render_multiqueue_tab(df_inputs, cfg)
 
 with tabs[6]:
-    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_forecast_tab()
 
 with tabs[7]:
-    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[8]:
-    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
+    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[9]:
-    render_report_tab(df_erlang, cfg)
+    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
 
 with tabs[10]:
+    render_report_tab(df_erlang, cfg)
+
+with tabs[11]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)

@@ -2,6 +2,7 @@ from typing import Dict, List
 
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import pandas as pd
 
@@ -10,6 +11,193 @@ from optimisation.greedy_shift_optimizer import optimise_shift_starts_v1
 from optimisation.lp_shift_optimizer import optimise_shifts_lp
 from roster.roster_engine import generate_roster_from_templates, parse_hhmm_to_minutes
 from ui.date_view import apply_date_view, render_date_view_controls, ensure_x_col
+
+
+# ── Colour palette ────────────────────────────────────────────────────────────
+_SHIFT_COLOURS = ["#6366F1", "#22C55E", "#F59E0B", "#EC4899", "#06B6D4", "#EF4444"]
+_BREAK_COLOUR  = "#3F3F46"   # zinc-700 — break window bands
+_REQ_COLOUR    = "#EF4444"   # red — requirement line
+_BG_CHART      = "rgba(0,0,0,0)"
+_GRID_COLOUR   = "#27272A"
+
+
+def _render_shift_gantt(
+    templates: List[Dict],
+    ruleset: List[Dict],
+    interval_minutes: int,
+    df_erlang: pd.DataFrame,
+) -> None:
+    """Render a Gantt-style chart of shift blocks with break windows and
+    a requirement vs coverage line chart below."""
+
+    if not templates:
+        return
+
+    # ── Build per-template data ───────────────────────────────────────────────
+    fig = go.Figure()
+
+    # Collect shift bars and break bands
+    for idx, tpl in enumerate(templates):
+        start_min = parse_hhmm_to_minutes(tpl["start"])
+        dur_min   = tpl["duration_min"]
+        end_min   = start_min + dur_min
+        heads     = tpl["heads"]
+        colour    = _SHIFT_COLOURS[idx % len(_SHIFT_COLOURS)]
+        label     = f"Shift {idx + 1}  ·  {tpl['start']}  ·  {heads} agents"
+
+        # Main shift block
+        fig.add_trace(go.Bar(
+            x=[dur_min],
+            base=[start_min],
+            y=[label],
+            orientation="h",
+            marker=dict(
+                color=colour,
+                opacity=0.85,
+                line=dict(color=colour, width=1),
+            ),
+            hovertemplate=(
+                f"<b>{label}</b><br>"
+                f"Start: {tpl['start']}<br>"
+                f"Duration: {dur_min} min<br>"
+                f"End: {end_min // 60:02d}:{end_min % 60:02d}<br>"
+                f"Agents: {heads}<extra></extra>"
+            ),
+            showlegend=(idx == 0),
+            name="Shift block" if idx == 0 else "",
+        ))
+
+        # Break windows for this shift length
+        for rule in ruleset:
+            if rule["min_len"] <= dur_min <= rule["max_len"]:
+                for brk in rule["breaks"]:
+                    earliest = start_min + brk["earliest_offset_min"]
+                    latest   = start_min + brk["latest_offset_min"]
+                    brk_dur  = brk["duration_min"]
+                    window_w = latest - earliest + brk_dur
+                    unpaid_tag = " (unpaid)" if brk.get("unpaid") else ""
+                    fig.add_trace(go.Bar(
+                        x=[window_w],
+                        base=[earliest],
+                        y=[label],
+                        orientation="h",
+                        marker=dict(
+                            color=_BREAK_COLOUR,
+                            opacity=0.55,
+                            pattern_shape="/",
+                        ),
+                        hovertemplate=(
+                            f"<b>{brk['name']}{unpaid_tag}</b><br>"
+                            f"Window: {earliest // 60:02d}:{earliest % 60:02d} – "
+                            f"{(latest + brk_dur) // 60:02d}:{(latest + brk_dur) % 60:02d}<br>"
+                            f"Duration: {brk_dur} min<extra></extra>"
+                        ),
+                        showlegend=(idx == 0 and brk == ruleset[-1]["breaks"][-1]),
+                        name="Break window" if (idx == 0 and brk == ruleset[-1]["breaks"][-1]) else "",
+                    ))
+
+    # ── X-axis tick labels (HH:MM every hour) ────────────────────────────────
+    all_starts = [parse_hhmm_to_minutes(t["start"]) for t in templates]
+    all_ends   = [parse_hhmm_to_minutes(t["start"]) + t["duration_min"] for t in templates]
+    x_min = max(0, min(all_starts) - 30)
+    x_max = min(24 * 60, max(all_ends) + 30)
+
+    tick_vals = list(range(0, 24 * 60 + 1, 60))
+    tick_text = [f"{h:02d}:00" for h in range(25)]
+
+    fig.update_layout(
+        barmode="overlay",
+        paper_bgcolor=_BG_CHART,
+        plot_bgcolor=_BG_CHART,
+        margin=dict(l=0, r=12, t=8, b=8),
+        height=max(100 + 52 * len(templates), 180),
+        font=dict(family="Inter, system-ui, sans-serif", size=11, color="#A1A1AA"),
+        xaxis=dict(
+            range=[x_min, x_max],
+            tickvals=tick_vals,
+            ticktext=tick_text,
+            showgrid=True,
+            gridcolor=_GRID_COLOUR,
+            zeroline=False,
+            title="Time of day",
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            autorange="reversed",
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            font=dict(size=10),
+        ),
+    )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    # ── Coverage vs requirement line chart ────────────────────────────────────
+    if "agents_required" not in df_erlang.columns or "roster_net_agents" not in df_erlang.columns:
+        return
+
+    # Build minute-offset x-axis for single-day view
+    req_series    = df_erlang["agents_required"].values
+    roster_series = df_erlang["roster_net_agents"].values if "roster_net_agents" in df_erlang.columns else None
+
+    n = len(req_series)
+    x_minutes = [i * interval_minutes for i in range(n)]
+    tick_vals_cov = list(range(0, 24 * 60 + 1, 60))
+
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(
+        x=x_minutes, y=req_series,
+        mode="lines",
+        name="Requirement",
+        line=dict(color=_REQ_COLOUR, width=2, dash="dot"),
+    ))
+    if roster_series is not None:
+        fig2.add_trace(go.Scatter(
+            x=x_minutes, y=roster_series,
+            mode="lines",
+            name="Roster (net)",
+            line=dict(color=_SHIFT_COLOURS[0], width=2),
+            fill="tozeroy",
+            fillcolor=_SHIFT_COLOURS[0] + "18",
+        ))
+
+    fig2.update_layout(
+        paper_bgcolor=_BG_CHART,
+        plot_bgcolor=_BG_CHART,
+        margin=dict(l=0, r=12, t=8, b=8),
+        height=180,
+        font=dict(family="Inter, system-ui, sans-serif", size=11, color="#A1A1AA"),
+        xaxis=dict(
+            range=[x_min, x_max],
+            tickvals=tick_vals_cov,
+            ticktext=[f"{h:02d}:00" for h in range(25)],
+            showgrid=True,
+            gridcolor=_GRID_COLOUR,
+            zeroline=False,
+            title="Time of day",
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor=_GRID_COLOUR,
+            zeroline=False,
+            title="Agents",
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            font=dict(size=10),
+        ),
+    )
+    st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
 def _build_roster_daily_summary(df: pd.DataFrame, req_col: str) -> pd.DataFrame:
     if "date_local" not in df.columns:
@@ -195,6 +383,10 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
         c1.metric("Roster paid hours", f"{paid_hours_total:.1f}h")
         c2.metric("Roster paid FTE equiv (7.6h)", f"{paid_hours_total / 7.6:.2f}")
         c3.metric("Roster peak net", int(roster_df["roster_net_agents"].max()))
+
+        # Phase 19: Gantt shift schedule + coverage chart
+        with st.expander("Shift schedule & coverage chart", expanded=True):
+            _render_shift_gantt(templates, ruleset, cfg.interval_minutes, df_erlang)
 
         has_ts = "start_ts_local" in roster_df.columns and roster_df["start_ts_local"].notna().any()
         has_date = "date_local" in roster_df.columns and roster_df["date_local"].notna().any()

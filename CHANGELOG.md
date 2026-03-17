@@ -1,5 +1,41 @@
 # Changelog
 
+## 2026-03-17 (Phase 19 — Gantt Shift Schedule Visualisation)
+
+### Added
+ui/tab_roster.py — `_render_shift_gantt(templates, ruleset, interval_minutes, df_erlang)`:
+- Horizontal Gantt using Plotly `go.Bar` with `barmode="overlay"`
+- One indigo-palette bar per active shift template (start → start + duration)
+- Break windows overlaid as hatched zinc bars (earliest offset → latest + duration)
+- HH:MM x-axis auto-ranged to cover all shift start/end times ± 30 min
+- Coverage vs requirement line chart below: roster net (filled) + requirement (dashed red)
+- Rendered in a collapsible expander ("Shift schedule & coverage chart", expanded by default)
+  immediately after the 3 summary metrics
+
+Added `import plotly.graph_objects as go` to tab_roster.py imports.
+
+## 2026-03-17 (Phase 18 — Overview Dashboard)
+
+### Added
+ui/tab_overview.py — read-only KPI landing tab:
+- Module status strip: 🟢/⚪ per module (Demand, Roster, Simulation, Forecast,
+  Planning, Optimisation, Cost)
+- Section: Demand & Staffing — total calls, peak agents required, avg SL%, avg occ%
+- Section: Roster & Coverage — peak roster net, coverage vs requirement %, understaffed
+  interval %, total paid hours
+- Section: Simulation — simulated SL%, abandon rate, avg utilisation, calls handled
+- Section: Cost — total labour, idle, breach costs, cost per call
+- Section: Workforce Planning — opening/closing HC, deficit months, total optimised hires
+- Section: Interval trends — three mini sparkline charts (agents required, SL%,
+  labour cost by interval); uses `go.Scatter` with `fill="tozeroy"`
+- All sections pull from session state; graceful caption when tab not yet run
+
+app.py:
+- `from ui.tab_overview import render_overview_tab` added
+- "Overview" inserted at tabs[0]; all existing tabs renumbered +1
+- Overview renders before roster_df is available — passes `roster_df=None`
+  (section shows a gentle prompt to run the Roster tab)
+
 ## 2026-03-17 (Phase 17 — Formatted Excel Export)
 
 ### Added

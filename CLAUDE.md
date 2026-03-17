@@ -38,7 +38,26 @@ Simulation design notes: see DES_NOTES.md
 | 15 | Multi-queue comparison | ✅ Complete |
 | 16 | Config save/load | ✅ Complete |
 | 17 | Formatted Excel export | ✅ Complete |
-| 18 | — | 🔜 Next |
+| 18 | Overview dashboard | ✅ Complete |
+| 19 | Gantt shift schedule visualisation | ✅ Complete |
+| 20 | — | 🔜 Next |
+
+Phase 19 (Gantt shift schedule visualisation) delivered: `_render_shift_gantt()`
+added to ui/tab_roster.py. Plotly horizontal bar chart — one bar per active shift
+template showing start time, duration, and head count. Break windows overlaid as
+hatched zinc bands per ruleset. Coverage vs requirement line chart below Gantt.
+Both charts share a HH:MM time-of-day x-axis. Displayed in an expander immediately
+after the 3 roster summary metrics.
+
+Phase 18 (overview dashboard) delivered: ui/tab_overview.py — read-only landing
+tab inserted at tabs[0]. Five sections: Demand & Staffing (total calls, peak agents
+required, avg SL%, avg occ%), Roster & Coverage (peak roster, coverage %, understaffed
+intervals, paid hours), Simulation (sim SL%, abandon rate, utilisation, calls handled),
+Cost (labour, idle, breach, cost per call), Workforce Planning (opening/closing HC,
+deficit months, total hires). Module status strip shows 🟢/⚪ per module. Three
+mini sparkline charts: agents required, SL%, and labour cost by interval. All data
+from session state — graceful "run tab X to populate" captions when unavailable.
+Overview tab inserted at tabs[0]; all existing tabs renumbered +1.
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -178,6 +197,7 @@ Demand Input
 | `ui/tab_planning.py` | Workforce Planning tab (Phase 7) |
 | `ui/tab_optimisation.py` | Hiring Optimisation tab (Phase 8) |
 | `ui/date_view.py` | Shared date/interval view helpers + `ensure_x_col` |
+| `ui/tab_overview.py` | **Phase 18 overview dashboard** — read-only KPI landing tab |
 | `utils/export.py` | CSV + ZIP export generation |
 | `utils/excel_export.py` | **Phase 17 Excel engine** — build_simulation_workbook() → formatted .xlsx bytes |
 | `persistence/config_store.py` | **Phase 16 config store** — save/load/delete named sb_* snapshots in configs/ |
