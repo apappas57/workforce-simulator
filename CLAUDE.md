@@ -42,7 +42,19 @@ Simulation design notes: see DES_NOTES.md
 | 19 | Gantt shift schedule visualisation | ✅ Complete |
 | 20 | Caching layer | ✅ Complete |
 | 21 | Chart consistency pass | ✅ Complete |
-| 22 | — | 🔜 Next |
+| 22 | Quick Erlang C calculator | ✅ Complete |
+| 23 | — | 🔜 Next |
+
+Phase 22 (quick Erlang C calculator) delivered: `ui/tab_quickcalc.py` —
+self-contained single-interval calculator tab (no sidebar dependency, no CSV
+required). Three-column input panel: Demand (calls, AHT, interval), Service
+Level (SL target %, answer-within threshold), Staffing (shrinkage %, max
+occupancy %). Results row: net agents, paid agents (shrinkage-adjusted),
+predicted SL%, predicted ASA, predicted occupancy, traffic intensity in
+Erlangs. Sensitivity section: `±8 agents` sweep chart (SL% + occupancy on
+dual y-axis, SL target reference line, required-agents marker) plus
+collapsible sensitivity table. Inserted at `tabs[1]` — immediately after
+Overview. Existing tabs shifted +1 in `app.py`.
 
 Phase 21 (chart consistency pass) delivered: `ui/charts.py` created as shared
 chart utilities module. Contains `PALETTE` (8-colour indigo/zinc palette),
@@ -215,6 +227,7 @@ Demand Input
 | `ui/tab_optimisation.py` | Hiring Optimisation tab (Phase 8) |
 | `ui/date_view.py` | Shared date/interval view helpers + `ensure_x_col` |
 | `ui/charts.py` | **Phase 21 chart utilities** — `apply_dark_theme()`, `PALETTE`, semantic colour constants |
+| `ui/tab_quickcalc.py` | **Phase 22 quick calculator** — self-contained single-interval Erlang C calculator |
 | `ui/tab_overview.py` | **Phase 18 overview dashboard** — read-only KPI landing tab |
 | `utils/export.py` | CSV + ZIP export generation |
 | `utils/excel_export.py` | **Phase 17 Excel engine** — build_simulation_workbook() → formatted .xlsx bytes |
