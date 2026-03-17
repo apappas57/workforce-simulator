@@ -15,6 +15,12 @@ plotly==6.6.0              # (direct) interactive charts
 pulp==3.3.0                # (direct) LP optimisation (shift optimiser)
 simpy==4.1.1               # (direct) discrete event simulation engine
 
+# --- Phase 10: authentication + deployment (direct) ---
+streamlit-authenticator==0.3.3   # (direct) login screen with bcrypt-hashed credentials
+cryptography==42.0.5             # (direct) RSA deployment key signing and verification
+PyYAML==6.0.2                    # (direct) credentials.yaml parsing (also stauth dep)
+bcrypt==4.2.1                    # (direct) password hashing for credentials (also stauth dep)
+
 # --- Streamlit transitive dependencies ---
 altair==5.5.0
 blinker==1.9.0

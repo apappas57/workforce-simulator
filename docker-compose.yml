@@ -1,0 +1,30 @@
+# Workforce Simulator — docker-compose.yml
+#
+# Quick start:
+#   1. cp .env.example .env           — fill in DEPLOYMENT_KEY
+#   2. cp auth/credentials.yaml.example auth/credentials.yaml
+#                                     — add users and set cookie key
+#   3. docker-compose up --build
+#   4. Open http://localhost:8501
+
+version: "3.9"
+
+services:
+  workforce-simulator:
+    build: .
+    container_name: workforce-simulator
+    ports:
+      - "8501:8501"
+
+    # Secrets and deployment key come from .env (never committed to git)
+    env_file:
+      - .env
+
+    volumes:
+      # Persist simulation state across container restarts
+      - ./state:/app/state
+
+      # Mount credentials at runtime — never bake them into the image
+      - ./auth/credentials.yaml:/app/auth/credentials.yaml:ro
+
+    restart: unless-stopped

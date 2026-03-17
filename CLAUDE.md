@@ -30,7 +30,8 @@ Simulation design notes: see DES_NOTES.md
 | 7 | Strategic workforce planning | ✅ Complete |
 | 8 | Optimisation engine | ✅ Complete |
 | 9 | Platform development | ✅ Complete |
-| 10 | Authentication + deployment | 🔜 Next |
+| 10 | Authentication + deployment | ✅ Complete |
+| 11 | Demand forecasting | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -47,6 +48,13 @@ Phase 9 (persistent state) delivered: file-based persistence layer
 values saved to state/settings.json on every run and restored on reload.
 Computed DataFrames (planning_projection, optimisation_result, etc.) saved as
 Parquet in state/ after each run. 20 unit tests added. state/ is git-ignored.
+
+Phase 10 (authentication + deployment) delivered: RSA-signed deployment keys
+(auth/keygen.py + auth/key_validator.py), streamlit-authenticator login screen
+with bcrypt-hashed credentials in auth/credentials.yaml, Dockerfile +
+docker-compose.yml for one-command startup, .env pattern for secrets,
+README.md with 10-minute setup guide. auth/private_key.pem and
+auth/credentials.yaml are git-ignored.
 
 ---
 
@@ -147,6 +155,7 @@ imported with a try/except shim.
 | `tests/test_workforce_optimiser.py` | Phase 8 LP optimiser — 12 tests (requires pulp) |
 | `tests/test_state_manager.py` | Phase 9 persistence layer — 20 tests (parquet test skipped without pyarrow) |
 | `tests/test_shrinkage_calculator.py` | Phase 6 remainder — observed shrinkage — 17 tests |
+| `tests/test_key_validator.py` | Phase 10 deployment key validation — 10 tests |
 
 Run locally:
 ```bash
@@ -224,6 +233,21 @@ all IO exceptions and logs warnings — it never raises. The app is fully functi
 without the state/ directory. If state appears stale or corrupt, delete state/ and
 the app will rebuild it from defaults on the next run.
 
+**Phase 10 auth is two-layer.** The deployment key gate (Alex-controlled) runs first;
+the login screen (org-controlled) runs second. Both are bypassed gracefully when their
+dependencies are absent, which means the app runs without auth in development. The key
+validator never makes network calls — validation is fully offline using the embedded
+public_key.pem. Private key and credentials.yaml are git-ignored and never baked into
+the Docker image (mounted as a volume at runtime).
+
+**app.py gate order is intentional.** `_gate_deployment_key()` then `_gate_login()` are
+called before `_init_session_state()` and before any sidebar or tab code runs. Both call
+`st.stop()` on failure, so downstream code never executes for unauthenticated requests.
+
+**Deployment key format.** `base64url(RSA_signature).base64url(JSON_payload)` where
+payload = `{"org": ..., "issued_at": "YYYY-MM-DD", "expires_at": "YYYY-MM-DD"|null}`.
+The key is opaque to the end user — they just paste it into .env.
+
 **Sidebar widgets use `sb_` prefixed session state keys.** All sidebar widgets
 now carry `key="sb_*"`. `_init_session_state()` pre-populates these from
 `state_manager.load_settings()` before widgets render. The return dict from
@@ -240,7 +264,6 @@ entry in `_DEFAULT_SETTINGS` must be updated to match.
 ## Known limitations (current)
 
 - Scenario output comparison visuals are early-stage.
-- No authentication (Phase 10).
 - `staffing_loader.py` uses `"staffing_interval_input"` as a placeholder `date_local`
   when only interval-indexed staffing is provided — downstream code guards for this.
 - Attrition applies uniformly to all headcount including in-training and ramp agents

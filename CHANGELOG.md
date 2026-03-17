@@ -1,4 +1,78 @@
 # Changelog
+## 2026-03-17 (Phase 10 — Authentication + Deployment)
+
+### Added
+RSA-signed deployment key system (auth/keygen.py + auth/key_validator.py).
+
+Alex holds the RSA 2048-bit private key (auth/private_key.pem — git-ignored, never
+distributed). The public key (auth/public_key.pem) is embedded in the repo and Docker
+image. Deployment keys are issued per-organisation, optionally time-limited, and
+verified entirely offline with no network calls.
+
+Key format: base64url(RSA_PKCS1v15_SHA256_signature).base64url(JSON_payload)
+Payload: {"org": "...", "issued_at": "YYYY-MM-DD", "expires_at": "YYYY-MM-DD"|null}
+
+---
+
+### Added
+Login screen via streamlit-authenticator.
+
+Users are managed in auth/credentials.yaml (git-ignored) with bcrypt-hashed passwords.
+Each organisation controls their own user list — there is no central user database.
+The login gate runs in app.py after the deployment key check and before any app content
+is rendered.
+
+---
+
+### Added
+Docker deployment (Dockerfile + docker-compose.yml).
+
+python:3.11-slim base image, all pinned dependencies installed from requirements.txt.
+docker-compose mounts ./state (persistence) and auth/credentials.yaml (read-only) as
+volumes so secrets are never baked into the image. One-command startup:
+  docker-compose up --build
+
+---
+
+### Added
+Secret management pattern (.env.example).
+
+DEPLOYMENT_KEY is read from the environment. .env.example documents the pattern.
+.env is git-ignored.
+
+---
+
+### Added
+README.md with 10-minute setup guide.
+
+Covers: prerequisites, local setup (venv + manual env vars), Docker setup,
+deployment key acquisition, user management, file structure, running tests.
+
+---
+
+### Added
+requirements.txt updated with Phase 10 direct dependencies:
+- streamlit-authenticator==0.3.3
+- cryptography==42.0.5
+- PyYAML==6.0.2
+- bcrypt==4.2.1
+
+---
+
+### Added
+auth/credentials.yaml.example — template for per-org user management with
+instructions for bcrypt hash generation and cookie key setup.
+
+---
+
+### Architecture
+app.py gate order: _gate_deployment_key() → _gate_login() → _init_session_state()
+→ main app. Both gates call st.stop() on failure so no downstream code runs for
+unauthenticated requests. Both degrade gracefully (allow access) when their
+dependencies are not installed, keeping the dev workflow unaffected.
+
+---
+
 ## 2026-03-17 (Phase 6 remainder — observed shrinkage)
 
 ### Added

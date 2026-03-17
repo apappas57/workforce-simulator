@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -20,6 +23,21 @@ try:
     _staffing_loader_available = True
 except ImportError:
     _staffing_loader_available = False
+
+# --- Phase 10: optional auth imports ---
+try:
+    from auth.key_validator import validate_deployment_key
+    _key_validator_available = True
+except ImportError:
+    _key_validator_available = False
+
+try:
+    import streamlit_authenticator as stauth
+    import yaml
+    from yaml.loader import SafeLoader
+    _stauth_available = True
+except ImportError:
+    _stauth_available = False
 
 
 def _init_session_state() -> None:
@@ -81,6 +99,90 @@ def _init_session_state() -> None:
 
 
 st.set_page_config(page_title="Call Centre Workforce Simulator", layout="wide")
+
+
+# ---------------------------------------------------------------------------
+# Phase 10: Deployment key gate
+# ---------------------------------------------------------------------------
+# Reads DEPLOYMENT_KEY from the environment (set in .env / docker-compose env).
+# If the key is missing or invalid the app stops here with a clear message.
+# Bypassed automatically when the key_validator module is not importable
+# (e.g. during unit testing without the auth package installed).
+
+def _gate_deployment_key() -> None:
+    """Halt with a user-facing error if the deployment key is absent or invalid."""
+    if not _key_validator_available:
+        return  # auth package not installed — allow access (dev/test mode)
+
+    key = os.environ.get("DEPLOYMENT_KEY", "").strip()
+    if not key:
+        st.error(
+            "**Deployment key required.**\n\n"
+            "Set `DEPLOYMENT_KEY` in your `.env` file or environment variables. "
+            "Contact your administrator to obtain a key."
+        )
+        st.stop()
+
+    valid, msg = validate_deployment_key(key)
+    if not valid:
+        st.error(f"**Invalid deployment key:** {msg}\n\nContact your administrator to obtain a valid key.")
+        st.stop()
+
+
+# ---------------------------------------------------------------------------
+# Phase 10: Login screen
+# ---------------------------------------------------------------------------
+
+def _gate_login() -> None:
+    """Render the login screen and halt until the user authenticates.
+
+    Reads credentials from auth/credentials.yaml. Skipped gracefully if
+    streamlit-authenticator is not installed or credentials.yaml does not exist
+    (local dev without auth configured).
+    """
+    if not _stauth_available:
+        return  # streamlit-authenticator not installed — allow access
+
+    creds_path = Path(__file__).parent / "auth" / "credentials.yaml"
+    if not creds_path.exists():
+        # credentials.yaml not configured — allow access with a dev-mode notice
+        st.sidebar.warning("⚠️ auth/credentials.yaml not found — running without login.")
+        return
+
+    with open(creds_path) as f:
+        config = yaml.load(f, Loader=SafeLoader)
+
+    authenticator = stauth.Authenticate(
+        config["credentials"],
+        config["cookie"]["name"],
+        config["cookie"]["key"],
+        config["cookie"]["expiry_days"],
+    )
+
+    authenticator.login()
+
+    status = st.session_state.get("authentication_status")
+    if status is False:
+        st.error("Incorrect username or password.")
+        st.stop()
+    elif status is None:
+        st.info("Enter your credentials to access the Workforce Simulator.")
+        st.stop()
+    else:
+        # Authenticated — add logout button and welcome message to sidebar.
+        authenticator.logout("Logout", "sidebar")
+        name = st.session_state.get("name", "")
+        if name:
+            st.sidebar.markdown(f"Logged in as **{name}**")
+
+
+_gate_deployment_key()
+_gate_login()
+
+# ---------------------------------------------------------------------------
+# Main application
+# ---------------------------------------------------------------------------
+
 st.title("Call Centre Workforce Simulator — Interval Model + Erlang + Roster + DES")
 
 _init_session_state()
