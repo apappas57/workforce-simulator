@@ -182,7 +182,11 @@ def _run_stl_forecast(
         model_kwargs={"error": "add", "trend": "add"},
         period=period,
     )
-    result = stlf.fit(disp=False)
+    import inspect as _inspect
+    _fit_kwargs = {}
+    if "disp" in _inspect.signature(stlf.fit).parameters:
+        _fit_kwargs["disp"] = False
+    result = stlf.fit(**_fit_kwargs)
 
     try:
         pred = result.get_prediction(
