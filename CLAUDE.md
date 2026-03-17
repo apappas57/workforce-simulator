@@ -31,7 +31,8 @@ Simulation design notes: see DES_NOTES.md
 | 8 | Optimisation engine | ✅ Complete |
 | 9 | Platform development | ✅ Complete |
 | 10 | Authentication + deployment | ✅ Complete |
-| 11 | Demand forecasting | 🔜 Next |
+| 11 | Demand forecasting | ✅ Complete |
+| 12 | PDF report export | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -48,6 +49,15 @@ Phase 9 (persistent state) delivered: file-based persistence layer
 values saved to state/settings.json on every run and restored on reload.
 Computed DataFrames (planning_projection, optimisation_result, etc.) saved as
 Parquet in state/ after each run. 20 unit tests added. state/ is git-ignored.
+
+Phase 11 (demand forecasting) delivered: STL-based demand forecasting engine
+(demand/demand_forecaster.py). Aggregates historical interval data to daily
+totals, runs STLForecast + ETS (statsmodels), distributes forecast across
+intervals using historical average intraday profile. Confidence intervals at
+80/90/95%. Demand Forecast tab added. Forecast pushes into the simulation
+pipeline with one click (forecast_demand_df session state key). 26 unit tests
+(12 pass without statsmodels; 14 run on full install). statsmodels + scipy added
+to requirements.txt.
 
 Phase 10 (authentication + deployment) delivered: RSA-signed deployment keys
 (auth/keygen.py + auth/key_validator.py), streamlit-authenticator login screen
@@ -91,6 +101,8 @@ Demand Input
 | `optimisation/greedy_shift_optimizer.py` | Greedy heuristic for shift start placement |
 | `analysis/gap_analysis.py` | Roster vs requirement gap computation |
 | `analysis/scenario_runner.py` | Scenario shock application |
+| `demand/demand_forecaster.py` | **Phase 11 forecasting engine** — ForecastParams dataclass + forecast_demand() |
+| `ui/tab_forecast.py` | Demand Forecast tab (Phase 11) |
 | `planning/workforce_planner.py` | **Phase 7 projection engine** — PlanningParams dataclass + project_workforce() |
 | `planning/hiring_loader.py` | Loaders for hiring_plan.csv and required_fte_plan.csv |
 | `optimisation/workforce_optimiser.py` | **Phase 8 LP engine** — OptimisationParams + optimise_hiring_plan() + optimise_scenarios() |
@@ -128,6 +140,7 @@ instead.
 | `planning_required_fte` | DataFrame | tab_planning | tab_downloads |
 | `optimisation_result` | DataFrame | tab_optimisation | tab_downloads |
 | `optimisation_scenarios` | DataFrame | tab_optimisation | tab_downloads |
+| `forecast_demand_df` | DataFrame or None | tab_forecast | app.py demand block |
 
 ### Adding a key for a new phase
 
@@ -155,7 +168,8 @@ imported with a try/except shim.
 | `tests/test_workforce_optimiser.py` | Phase 8 LP optimiser — 12 tests (requires pulp) |
 | `tests/test_state_manager.py` | Phase 9 persistence layer — 20 tests (parquet test skipped without pyarrow) |
 | `tests/test_shrinkage_calculator.py` | Phase 6 remainder — observed shrinkage — 17 tests |
-| `tests/test_key_validator.py` | Phase 10 deployment key validation — 10 tests |
+| `tests/test_key_validator.py` | Phase 10 deployment key validation — 11 tests |
+| `tests/test_demand_forecaster.py` | Phase 11 forecasting engine — 26 tests (14 skip without statsmodels) |
 
 Run locally:
 ```bash

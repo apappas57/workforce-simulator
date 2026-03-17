@@ -39,6 +39,7 @@ PERSISTENT_DF_KEYS: list = [
     "planning_required_fte",
     "optimisation_result",
     "optimisation_scenarios",
+    "forecast_demand_df",          # Phase 11 — active demand forecast
 ]
 
 # ── Selectbox option validation ────────────────────────────────────────────────
@@ -207,20 +208,27 @@ def save_dataframe(key: str, df: pd.DataFrame) -> None:
         log.warning("Could not save DataFrame '%s': %s", key, exc)
 
 
+# Keys that default to None rather than an empty DataFrame when absent.
+# app.py checks `is not None` for these to decide whether to use them.
+_NONE_DEFAULT_DF_KEYS = {"forecast_demand_df"}
+
+
 def load_dataframes() -> dict:
     """Load all persisted DataFrames from disk.
 
-    Missing or unreadable files silently yield empty DataFrames.
+    Missing or unreadable files silently yield empty DataFrames (or None for
+    keys listed in _NONE_DEFAULT_DF_KEYS).
     """
     result: dict = {}
     for key in PERSISTENT_DF_KEYS:
         path = STATE_DIR / f"{key}.parquet"
         if path.exists():
             try:
-                result[key] = pd.read_parquet(path)
+                df = pd.read_parquet(path)
+                result[key] = df if not df.empty else (None if key in _NONE_DEFAULT_DF_KEYS else pd.DataFrame())
             except Exception as exc:
                 log.warning("Could not load DataFrame '%s': %s", key, exc)
-                result[key] = pd.DataFrame()
+                result[key] = None if key in _NONE_DEFAULT_DF_KEYS else pd.DataFrame()
         else:
-            result[key] = pd.DataFrame()
+            result[key] = None if key in _NONE_DEFAULT_DF_KEYS else pd.DataFrame()
     return result

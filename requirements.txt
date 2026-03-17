@@ -15,6 +15,10 @@ plotly==6.6.0              # (direct) interactive charts
 pulp==3.3.0                # (direct) LP optimisation (shift optimiser)
 simpy==4.1.1               # (direct) discrete event simulation engine
 
+# --- Phase 11: demand forecasting (direct) ---
+statsmodels==0.14.4          # (direct) STL decomposition and STLForecast + ETS
+scipy==1.14.1                # (direct) normal ppf for CI fallback in forecaster
+
 # --- Phase 10: authentication + deployment (direct) ---
 streamlit-authenticator==0.3.3   # (direct) login screen with bcrypt-hashed credentials
 cryptography==42.0.5             # (direct) RSA deployment key signing and verification

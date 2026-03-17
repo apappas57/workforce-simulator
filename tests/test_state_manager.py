@@ -195,13 +195,18 @@ class TestSaveLoadDataFrame(unittest.TestCase):
                 result = sm.load_dataframes()
         pd.testing.assert_frame_equal(result["planning_projection"], df)
 
-    def test_missing_file_yields_empty_dataframe(self):
+    def test_missing_file_yields_empty_or_none(self):
+        """Keys in _NONE_DEFAULT_DF_KEYS yield None; all others yield an empty DataFrame."""
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             with _patch_state_dir(tmp_path):
                 result = sm.load_dataframes()
         for key in sm.PERSISTENT_DF_KEYS:
-            self.assertTrue(result[key].empty)
+            if key in sm._NONE_DEFAULT_DF_KEYS:
+                self.assertIsNone(result[key])
+            else:
+                self.assertIsInstance(result[key], pd.DataFrame)
+                self.assertTrue(result[key].empty)
 
     def test_save_noop_for_empty_dataframe(self):
         with tempfile.TemporaryDirectory() as tmp:

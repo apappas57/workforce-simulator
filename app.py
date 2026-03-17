@@ -14,6 +14,7 @@ from ui.sidebar import render_sidebar
 from ui.tab_demand import render_demand_tab
 from ui.tab_des import render_des_tab
 from ui.tab_downloads import render_downloads_tab
+from ui.tab_forecast import render_forecast_tab
 from ui.tab_optimisation import render_optimisation_tab
 from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
@@ -78,6 +79,9 @@ def _init_session_state() -> None:
         # --- Phase 8: optimisation outputs ---
         "optimisation_result":     pd.DataFrame(),
         "optimisation_scenarios":  pd.DataFrame(),
+
+        # --- Phase 11: demand forecast ---
+        "forecast_demand_df":      None,
     }
 
     for key, default in _DEFAULTS.items():
@@ -202,24 +206,38 @@ cfg = SimConfig(
 # Phase 9: persist sidebar settings after every render (fast JSON write).
 state_manager.save_settings(st.session_state)
 
-try:
-    if sidebar_inputs["use_synth"]:
-        num_intervals = int(round(24 * 60 / cfg.interval_minutes))
-        df_inputs = build_synthetic_day(
-            num_intervals=num_intervals,
-            avg_calls=sidebar_inputs["avg_calls"],
-        )
-    else:
-        df_inputs = load_demand_csv(
-            sidebar_inputs["uploaded"],
-            input_tz=sidebar_inputs["input_tz"],
-            model_tz=sidebar_inputs["model_tz"],
-        )
-        validate_demand(df_inputs)
+# Phase 11: forecasted demand takes priority when active.
+_forecast_df = st.session_state.get("forecast_demand_df")
+_using_forecast = _forecast_df is not None and not (
+    isinstance(_forecast_df, pd.DataFrame) and _forecast_df.empty
+)
+
+if _using_forecast:
+    try:
+        df_inputs = _forecast_df.copy()
         num_intervals = len(df_inputs)
-except Exception as e:
-    st.error(f"Demand input error: {e}")
-    st.stop()
+    except Exception as e:
+        st.error(f"Forecast demand error: {e}")
+        st.stop()
+else:
+    try:
+        if sidebar_inputs["use_synth"]:
+            num_intervals = int(round(24 * 60 / cfg.interval_minutes))
+            df_inputs = build_synthetic_day(
+                num_intervals=num_intervals,
+                avg_calls=sidebar_inputs["avg_calls"],
+            )
+        else:
+            df_inputs = load_demand_csv(
+                sidebar_inputs["uploaded"],
+                input_tz=sidebar_inputs["input_tz"],
+                model_tz=sidebar_inputs["model_tz"],
+            )
+            validate_demand(df_inputs)
+            num_intervals = len(df_inputs)
+    except Exception as e:
+        st.error(f"Demand input error: {e}")
+        st.stop()
 
 staffing_df = None
 
@@ -275,6 +293,7 @@ tabs = st.tabs([
     "Roster + Gaps + Optimiser",
     "DES validation",
     "Scenario Compare",
+    "Demand Forecast",
     "Workforce Planning",
     "Hiring Optimisation",
     "Downloads",
@@ -292,10 +311,13 @@ with tabs[3]:
     render_scenarios_tab(df_inputs, cfg)
 
 with tabs[4]:
-    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_forecast_tab()
 
 with tabs[5]:
-    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[6]:
+    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+
+with tabs[7]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)

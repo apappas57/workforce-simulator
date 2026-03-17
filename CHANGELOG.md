@@ -1,4 +1,86 @@
 # Changelog
+## 2026-03-17 (Phase 11 — Demand Forecasting)
+
+### Added
+STL demand forecasting engine (demand/demand_forecaster.py).
+
+ForecastParams dataclass with fields:
+- historical_df: multi-day demand DataFrame in canonical schema
+- horizon_days: number of future days to forecast (default 7)
+- intervals_per_day: intervals per day (default 96 for 15-min)
+- confidence_level: prediction interval coverage (default 0.90)
+- stl_period: seasonal period in days for STL (default 7 — weekly)
+- min_history_days: minimum distinct days required (default 14)
+
+forecast_demand() approach:
+1. Aggregate historical interval data to daily totals
+2. Run STLForecast + ETS (additive error + trend) from statsmodels
+3. Compute interval-level forecast by applying historical average intraday
+   profile (proportion of daily calls per interval) to each forecast day
+4. Scale confidence bounds by same intraday proportions
+5. Return DataFrame compatible with the existing simulation pipeline
+   (date_local, interval_in_day, global_interval, calls_offered + CI columns)
+
+Column validation runs before the statsmodels import check so missing-column
+errors are always raised even when statsmodels is absent.
+
+---
+
+### Added
+Demand Forecast tab (ui/tab_forecast.py).
+
+New tab inserted between Scenario Compare and Workforce Planning:
+- Historical demand CSV uploader (reuses load_demand_csv)
+- Forecast horizon (1–90 days), confidence level (80/90/95%), intervals per day
+- Advanced expander: STL seasonal period and minimum history controls
+- Run Forecast button with spinner
+- Summary metrics: total forecasted calls, avg daily volume, delta vs historical
+- Interval-level forecast chart with confidence band and day boundary markers
+- STL decomposition chart (trend, seasonal, residual) in expandable section
+- Raw forecast data table
+- "Use as demand input" button — pushes forecast into session state as
+  forecast_demand_df; all simulation tabs immediately use forecasted demand
+- "Download forecast CSV" export button
+- "Discard preview" and "Clear forecast demand" controls
+
+---
+
+### Added
+Forecast demand priority in app.py.
+
+When forecast_demand_df is non-empty in session state, it is used as df_inputs
+in preference to manual CSV upload or synthetic demand. A persistent blue info
+banner marks the forecast as active. The existing manual demand path is unchanged
+and takes over immediately when the forecast is cleared.
+
+---
+
+### Added
+forecast_demand_df persistence in state_manager.py.
+
+Added to PERSISTENT_DF_KEYS (saved as state/forecast_demand_df.parquet).
+Uses None as the default (not empty DataFrame) — app.py checks is not None to
+decide whether forecast mode is active. Restored on reload so an active forecast
+survives browser refreshes.
+
+---
+
+### Added
+requirements.txt updated with Phase 11 direct dependencies:
+- statsmodels==0.14.4
+- scipy==1.14.1
+
+---
+
+### Added
+Test suite for forecasting engine (tests/test_demand_forecaster.py).
+
+26 tests across TestValidateParams, TestIntradayProfile, TestDailySeries,
+TestForecastDemand. 14 tests require statsmodels and skip gracefully when absent.
+12 tests run without statsmodels (helpers + column validation).
+
+---
+
 ## 2026-03-17 (Phase 10 — Authentication + Deployment)
 
 ### Added
