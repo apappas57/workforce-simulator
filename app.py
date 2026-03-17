@@ -115,6 +115,9 @@ def _init_session_state() -> None:
         # --- Phase 11: demand forecast ---
         "forecast_demand_df":      None,
 
+        # --- Simulation overall metrics (populated by tab_des after each DES run) ---
+        "des_overall_metrics":     {},
+
         # --- Phase 12: PDF report ---
         "report_erlang_df":        pd.DataFrame(),
         "report_pdf_bytes":        None,

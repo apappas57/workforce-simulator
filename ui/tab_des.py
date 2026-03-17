@@ -422,6 +422,8 @@ def render_des_tab(df_det, roster_df, cfg, staffing_df=None):
         sim_out = sim_run["sim_out"]
 
     overall = sim_out["overall"]
+    # Persist for the Overview tab — works for both single-day and multi-day runs.
+    st.session_state["des_overall_metrics"] = dict(overall)
     interval_kpis = sim_out["interval_kpis"]
     peak_requirement = None
     if "erlang_required_net_agents" in interval_kpis.columns:

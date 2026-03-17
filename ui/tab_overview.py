@@ -88,14 +88,13 @@ def _render_demand_section(df_erlang: pd.DataFrame) -> None:
     cols = st.columns(4)
 
     total_calls = int(df_erlang["calls_offered"].sum()) if "calls_offered" in df_erlang.columns else None
-    peak_req    = int(df_erlang["agents_required"].max()) if "agents_required" in df_erlang.columns else None
+    peak_req    = int(df_erlang["erlang_required_net_agents"].max()) if "erlang_required_net_agents" in df_erlang.columns else None
 
-    avg_sl  = None
-    avg_occ = None
-    if "erlang_sl_pct" in df_erlang.columns:
-        avg_sl = df_erlang["erlang_sl_pct"].mean()
-    if "erlang_occupancy" in df_erlang.columns:
-        avg_occ = df_erlang["erlang_occupancy"].mean()
+    # Filter to active intervals only (zero-call off-hours inflate SL to 100%)
+    active = df_erlang[df_erlang["calls_offered"].gt(0)] if "calls_offered" in df_erlang.columns else df_erlang
+
+    avg_sl  = active["erlang_pred_service_level"].mean() if "erlang_pred_service_level" in active.columns and not active.empty else None
+    avg_occ = active["erlang_pred_occupancy"].mean()     if "erlang_pred_occupancy"     in active.columns and not active.empty else None
 
     with cols[0]:
         st.metric("Total calls", f"{total_calls:,}" if total_calls is not None else "—")
@@ -119,17 +118,17 @@ def _render_roster_section(roster_df: Optional[pd.DataFrame], df_erlang: pd.Data
 
     # Coverage ratio vs Erlang requirement
     coverage = None
-    if peak_roster is not None and "agents_required" in df_erlang.columns:
-        peak_req = df_erlang["agents_required"].max()
+    if peak_roster is not None and "erlang_required_net_agents" in df_erlang.columns:
+        peak_req = df_erlang["erlang_required_net_agents"].max()
         if peak_req > 0:
             coverage = peak_roster / peak_req
 
     # Under-staffed intervals
     understaffed_pct = None
-    if "roster_net_agents" in roster_df.columns and "agents_required" in df_erlang.columns:
+    if "roster_net_agents" in roster_df.columns and "erlang_required_net_agents" in df_erlang.columns:
         n_intervals = len(roster_df)
         if n_intervals > 0:
-            erlang_req = df_erlang["agents_required"].values[:n_intervals]
+            erlang_req = df_erlang["erlang_required_net_agents"].values[:n_intervals]
             roster_net = roster_df["roster_net_agents"].values[:n_intervals]
             understaffed_pct = (roster_net < erlang_req).mean()
 
@@ -148,26 +147,28 @@ def _render_roster_section(roster_df: Optional[pd.DataFrame], df_erlang: pd.Data
 def _render_simulation_section() -> None:
     st.markdown("#### Simulation")
 
-    des_daily = st.session_state.get("des_daily_summary", pd.DataFrame())
+    # Primary source: overall dict stored directly after each DES run.
+    # Works for both single-day (no date_local) and multi-day runs.
+    overall = st.session_state.get("des_overall_metrics")
 
-    if not isinstance(des_daily, pd.DataFrame) or des_daily.empty:
+    if not isinstance(overall, dict) or not overall:
         st.caption("Run a simulation in the Simulation tab to populate DES metrics.")
         return
 
     cols = st.columns(4)
-    sim_sl      = des_daily["service_level_pct"].mean()    if "service_level_pct" in des_daily.columns else None
-    sim_aband   = des_daily["abandon_rate"].mean()         if "abandon_rate" in des_daily.columns else None
-    sim_util    = des_daily["avg_utilisation"].mean()      if "avg_utilisation" in des_daily.columns else None
-    sim_calls   = des_daily["calls_handled"].sum()         if "calls_handled" in des_daily.columns else None
+    sim_sl    = overall.get("sim_service_level")
+    sim_aband = overall.get("sim_abandon_rate")
+    sim_asa   = overall.get("sim_asa_seconds")
+    sim_calls = overall.get("sim_total_calls")
 
     with cols[0]:
-        st.metric("Simulated SL %", f"{sim_sl:.1%}" if sim_sl is not None else "—")
+        st.metric("Simulated SL %",  f"{float(sim_sl):.1%}"      if sim_sl    is not None else "—")
     with cols[1]:
-        st.metric("Abandon rate", f"{sim_aband:.1%}" if sim_aband is not None else "—")
+        st.metric("Abandon rate",    f"{float(sim_aband):.1%}"   if sim_aband is not None else "—")
     with cols[2]:
-        st.metric("Avg agent utilisation", f"{sim_util:.1%}" if sim_util is not None else "—")
+        st.metric("Avg speed of answer", f"{float(sim_asa):.1f}s" if sim_asa  is not None else "—")
     with cols[3]:
-        st.metric("Calls handled", f"{int(sim_calls):,}" if sim_calls is not None else "—")
+        st.metric("Total calls",     f"{int(sim_calls):,}"        if sim_calls is not None else "—")
 
 
 def _render_cost_section() -> None:
@@ -238,9 +239,9 @@ def _render_planning_section() -> None:
 def _render_trend_charts(df_erlang: pd.DataFrame) -> None:
     st.markdown("#### Interval trends")
 
-    has_sl  = "erlang_sl_pct" in df_erlang.columns
-    has_occ = "erlang_occupancy" in df_erlang.columns
-    has_req = "agents_required" in df_erlang.columns
+    has_req = "erlang_required_net_agents" in df_erlang.columns
+    has_sl  = "erlang_pred_service_level"  in df_erlang.columns
+    has_occ = "erlang_pred_occupancy"      in df_erlang.columns
 
     cost_df = st.session_state.get("cost_interval_df", pd.DataFrame())
     has_cost = isinstance(cost_df, pd.DataFrame) and not cost_df.empty and "labour_cost" in cost_df.columns
@@ -261,13 +262,13 @@ def _render_trend_charts(df_erlang: pd.DataFrame) -> None:
 
     if has_req:
         with chart_cols[col_idx]:
-            fig = _sparkline(x, df_erlang["agents_required"], _INDIGO, "Agents required", ",.0f")
+            fig = _sparkline(x, df_erlang["erlang_required_net_agents"], _INDIGO, "Agents required", ",.0f")
             st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         col_idx += 1
 
     if has_sl:
         with chart_cols[col_idx]:
-            fig = _sparkline(x, df_erlang["erlang_sl_pct"], _GREEN, "SL % (Erlang C)", ".0%")
+            fig = _sparkline(x, df_erlang["erlang_pred_service_level"], _GREEN, "SL % (Erlang C)", ".0%")
             st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         col_idx += 1
 
