@@ -12,6 +12,8 @@ simulation:
   • Monthly labour cost projection (if planning data is available)
 """
 
+from typing import Optional
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -40,7 +42,7 @@ def render_cost_tab(
     df_erlang: pd.DataFrame,
     cost_cfg: "CostConfig",
     cfg,
-    roster_df: pd.DataFrame | None = None,
+    roster_df: Optional[pd.DataFrame] = None,
 ) -> None:
     """Render the Cost Analytics tab.
 
