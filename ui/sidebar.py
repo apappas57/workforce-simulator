@@ -83,6 +83,78 @@ def render_sidebar():
         )
 
         st.divider()
+        st.header("Finance & operations")
+        st.caption(
+            "Used by the Cost Analytics tab. All costs in local currency (£ by default)."
+        )
+
+        st.selectbox(
+            "Agent cost rate type",
+            ["Hourly (£/hr)", "Annualised (£/year)"],
+            help=(
+                "Hourly: direct cost per productive agent per hour.\n\n"
+                "Annualised: total all-in annual cost (salary + on-costs). "
+                "Divided by Annual working hours below to derive the effective hourly rate."
+            ),
+            key="sb_cost_rate_type",
+        )
+
+        _rate_label = (
+            "Agent cost rate (£/hr)"
+            if st.session_state.get("sb_cost_rate_type", "Hourly (£/hr)") == "Hourly (£/hr)"
+            else "Agent cost rate (£/year)"
+        )
+        st.number_input(
+            _rate_label,
+            min_value=0.0,
+            max_value=500_000.0,
+            step=0.5,
+            help="All-in cost per productive agent at the rate type selected above.",
+            key="sb_agent_cost_rate",
+        )
+
+        if st.session_state.get("sb_cost_rate_type", "Hourly (£/hr)") == "Annualised (£/year)":
+            st.number_input(
+                "Annual working hours per FTE",
+                min_value=100,
+                max_value=3000,
+                step=10,
+                help=(
+                    "Productive hours per FTE per year used to convert the annualised "
+                    "rate to an effective hourly rate.\n\n"
+                    "Common values: 1,820 (35 hr/wk), 1,950 (37.5 hr/wk), 2,080 (40 hr/wk)."
+                ),
+                key="sb_annual_working_hours",
+            )
+
+        st.number_input(
+            "SLA breach penalty (£/abandoned call)",
+            min_value=0.0,
+            max_value=10_000.0,
+            step=0.5,
+            help=(
+                "Financial cost assigned to each call that abandons before being answered. "
+                "Acts as a proxy for re-contact cost, escalation cost, or SLA contractual penalty."
+            ),
+            key="sb_penalty_per_abandoned",
+        )
+
+        with st.expander("Advanced cost settings", expanded=False):
+            st.slider(
+                "Idle time cost fraction",
+                min_value=0.0,
+                max_value=1.0,
+                step=0.05,
+                help=(
+                    "Fraction of the hourly rate applied to surplus (idle) agent-time. "
+                    "1.0 = idle agents cost the same as busy agents (full wage). "
+                    "0.5 = idle time is half-costed (e.g. agents have back-office tasks). "
+                    "0.0 = idle time has no financial impact."
+                ),
+                key="sb_idle_rate_fraction",
+            )
+
+        st.divider()
         st.header("Randomness")
         st.number_input(
             "Seed",
@@ -105,6 +177,16 @@ def render_sidebar():
             key="sb_model_tz",
         )
 
+    # --- Cost config: convert annualised rate to hourly if needed ---------- #
+    _rate_type  = st.session_state.get("sb_cost_rate_type", "Hourly (£/hr)")
+    _raw_rate   = float(st.session_state.get("sb_agent_cost_rate", 30.0))
+    _annual_hrs = float(st.session_state.get("sb_annual_working_hours", 1820))
+    _hourly_rate = (
+        _raw_rate / _annual_hrs
+        if _rate_type == "Annualised (£/year)" and _annual_hrs > 0
+        else _raw_rate
+    )
+
     return {
         "interval_minutes":     int(st.session_state["sb_interval_minutes"]),
         "aht_seconds":          float(st.session_state["sb_aht_seconds"]),
@@ -119,4 +201,8 @@ def render_sidebar():
         "seed":                 int(st.session_state["sb_seed"]),
         "input_tz":             st.session_state["sb_input_tz"],
         "model_tz":             st.session_state["sb_model_tz"],
+        # Phase 13: cost config
+        "hourly_agent_cost":    _hourly_rate,
+        "penalty_per_abandoned": float(st.session_state.get("sb_penalty_per_abandoned", 8.0)),
+        "idle_rate_fraction":   float(st.session_state.get("sb_idle_rate_fraction", 1.0)),
     }

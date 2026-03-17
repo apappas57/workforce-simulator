@@ -33,7 +33,8 @@ Simulation design notes: see DES_NOTES.md
 | 10 | Authentication + deployment | ✅ Complete |
 | 11 | Demand forecasting | ✅ Complete |
 | 12 | PDF report export | ✅ Complete |
-| 13 | — | 🔜 Next |
+| 13 | Cost & financial analytics | ✅ Complete |
+| 14 | — | 🔜 Next |
 
 Phase 7 delivered: monthly workforce projection engine with cohort-based
 training/ramp modelling, proportional attrition, hiring plan CSV, required FTE
@@ -61,6 +62,16 @@ matplotlib Agg charts (no kaleido/Plotly dependency). Report tab added
 download button. df_erlang stored as report_erlang_df in session state
 after every compute cycle. reportlab==4.2.5 + matplotlib==3.9.4 added to
 requirements.txt.
+
+Phase 13 (cost & financial analytics) delivered: CostConfig dataclass and per-interval
+cost engine (models/cost_model.py). Per-interval labour, idle, and SLA breach cost
+calculations; cost-per-call trend; idle/overstaffing breakdown; monthly labour cost
+projection overlaid on workforce planning output. Sidebar Finance & operations section
+added with agent cost rate (hourly or annualised — conversion to hourly happens in
+sidebar return dict), SLA breach penalty, and idle cost fraction. Cost Analytics tab
+added (ui/tab_cost.py) with 6 KPI metrics, 3 Plotly charts, and monthly projection
+chart. cost_interval_df and cost_monthly_df stored in session state. 5 new default
+settings added to state_manager.py.
 
 Phase 11 (demand forecasting) delivered: STL-based demand forecasting engine
 (demand/demand_forecaster.py). Aggregates historical interval data to daily
@@ -117,6 +128,8 @@ Demand Input
 | `ui/tab_forecast.py` | Demand Forecast tab (Phase 11) |
 | `reports/report_builder.py` | **Phase 12 PDF engine** — ReportConfig dataclass + build_report() |
 | `ui/tab_report.py` | Report tab (Phase 12) |
+| `models/cost_model.py` | **Phase 13 cost engine** — CostConfig dataclass + calculate_interval_costs() + calculate_cost_summary() + project_monthly_labour_cost() |
+| `ui/tab_cost.py` | Cost Analytics tab (Phase 13) |
 | `planning/workforce_planner.py` | **Phase 7 projection engine** — PlanningParams dataclass + project_workforce() |
 | `planning/hiring_loader.py` | Loaders for hiring_plan.csv and required_fte_plan.csv |
 | `optimisation/workforce_optimiser.py` | **Phase 8 LP engine** — OptimisationParams + optimise_hiring_plan() + optimise_scenarios() |
@@ -157,6 +170,8 @@ instead.
 | `forecast_demand_df` | DataFrame or None | tab_forecast | app.py demand block |
 | `report_erlang_df` | DataFrame | app.py | tab_report |
 | `report_pdf_bytes` | bytes or None | tab_report | tab_report download button |
+| `cost_interval_df` | DataFrame | tab_cost | tab_downloads |
+| `cost_monthly_df` | DataFrame | tab_cost | tab_downloads |
 
 ### Adding a key for a new phase
 

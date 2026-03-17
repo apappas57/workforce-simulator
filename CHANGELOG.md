@@ -1,4 +1,47 @@
 # Changelog
+## 2026-03-17 (Phase 13 — Cost & Financial Analytics)
+
+### Added
+Cost model engine (models/cost_model.py):
+- CostConfig dataclass: hourly_agent_cost, penalty_per_abandoned, idle_rate_fraction
+- calculate_interval_costs(): per-interval labour, idle, and SLA breach costs;
+  uses rostered headcount if available, else Erlang net requirement as basis;
+  abandoned calls from DES daily_abandon_rate if available, else Erlang SL gap proxy
+- calculate_cost_summary(): aggregate totals, cost-per-call, idle cost pct,
+  overstaffed/understaffed interval percentages
+- project_monthly_labour_cost(): overlays monthly_labour_cost, monthly_required_cost,
+  monthly_cost_gap onto workforce planning projection (151.67 hr/month basis)
+
+Cost Analytics tab (ui/tab_cost.py):
+- 6 KPI metrics with staffing basis and abandon-source captions
+- Chart 1: stacked bar — labour cost + SLA breach cost per interval
+- Chart 2: cost per call line (left axis) + agents rostered dotted line (right axis)
+- Chart 3 (expander): idle cost bar + surplus agents line (dual-axis)
+- Monthly labour cost projection bar/line chart (requires Workforce Planning data)
+- Raw interval cost data table (expander)
+- Stores cost_interval_df and cost_monthly_df in session state
+
+Sidebar Finance & operations section (ui/sidebar.py):
+- Agent cost rate type selectbox: Hourly (£/hr) vs Annualised (£/year)
+- Agent cost rate number input (label adapts to rate type)
+- Annual working hours per FTE input (only shown for annualised mode)
+- SLA breach penalty (£/abandoned call) input
+- Idle time cost fraction slider (in Advanced cost settings expander)
+- Return dict now includes hourly_agent_cost (with annualised→hourly conversion),
+  penalty_per_abandoned, idle_rate_fraction
+
+app.py changes:
+- Imports render_cost_tab, CostConfig
+- cost_interval_df and cost_monthly_df added to _DEFAULTS
+- 5 new sb_cost_* sidebar widget defaults added to _DEFAULTS
+- CostConfig constructed from sidebar_inputs after SimConfig
+- "Cost Analytics" tab added at tabs[7]; Report → tabs[8]; Downloads → tabs[9]
+
+state_manager.py changes:
+- 5 new Phase 13 default settings: sb_cost_rate_type, sb_agent_cost_rate,
+  sb_annual_working_hours, sb_penalty_per_abandoned, sb_idle_rate_fraction
+- _deserialise guard added for sb_cost_rate_type to reject stale values
+
 ## 2026-03-17 (Phase 12 — PDF Report Export)
 
 ### Added

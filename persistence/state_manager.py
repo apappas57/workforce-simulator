@@ -91,6 +91,12 @@ _DEFAULT_SETTINGS: dict = {
     "opt_attrition_variance":       2.0,
     # Demand tab (key= values in tab_demand.py)
     "demand_activity_shrinkage_pct": 0.15,
+    # Phase 13: cost analytics sidebar inputs
+    "sb_cost_rate_type":        "Hourly (£/hr)",
+    "sb_agent_cost_rate":       30.0,
+    "sb_annual_working_hours":  1820,
+    "sb_penalty_per_abandoned": 8.0,
+    "sb_idle_rate_fraction":    1.0,
 }
 
 
@@ -119,6 +125,8 @@ def _deserialise(key: str, value: Any) -> Any:
         return "UTC"
     if key == "sb_model_tz" and value not in _TZ_OPTIONS:
         return "Australia/Melbourne"
+    if key == "sb_cost_rate_type" and value not in ("Hourly (£/hr)", "Annualised (£/year)"):
+        return "Hourly (£/hr)"
 
     return value
 

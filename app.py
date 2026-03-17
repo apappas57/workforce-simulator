@@ -17,6 +17,8 @@ from ui.tab_downloads import render_downloads_tab
 from ui.tab_forecast import render_forecast_tab
 from ui.tab_optimisation import render_optimisation_tab
 from ui.tab_report import render_report_tab
+from ui.tab_cost import render_cost_tab
+from models.cost_model import CostConfig
 from ui.tab_planning import render_planning_tab
 from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
@@ -87,6 +89,16 @@ def _init_session_state() -> None:
         # --- Phase 12: PDF report ---
         "report_erlang_df":        pd.DataFrame(),
         "report_pdf_bytes":        None,
+
+        # --- Phase 13: cost analytics ---
+        "cost_interval_df":        pd.DataFrame(),
+        "cost_monthly_df":         pd.DataFrame(),
+        # sidebar cost widget defaults (populated from state_manager on reload)
+        "sb_cost_rate_type":       "Hourly (£/hr)",
+        "sb_agent_cost_rate":      30.0,
+        "sb_annual_working_hours": 1820,
+        "sb_penalty_per_abandoned": 8.0,
+        "sb_idle_rate_fraction":   1.0,
 
         # --- Roster template widget defaults (tab_roster.py, fixed 6-row grid) ---
         # Pre-registered here so widgets never receive both value= and key= simultaneously.
@@ -224,6 +236,13 @@ cfg = SimConfig(
     seed=sidebar_inputs["seed"],
 )
 
+# Phase 13: build cost config from sidebar inputs (rate already in hourly terms).
+cost_cfg = CostConfig(
+    hourly_agent_cost=sidebar_inputs["hourly_agent_cost"],
+    penalty_per_abandoned=sidebar_inputs["penalty_per_abandoned"],
+    idle_rate_fraction=sidebar_inputs["idle_rate_fraction"],
+)
+
 # Phase 9: persist sidebar settings after every render (fast JSON write).
 state_manager.save_settings(st.session_state)
 
@@ -320,6 +339,7 @@ tabs = st.tabs([
     "Demand Forecast",
     "Workforce Planning",
     "Hiring Optimisation",
+    "Cost Analytics",
     "Report",
     "Downloads",
 ])
@@ -345,7 +365,10 @@ with tabs[6]:
     render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[7]:
-    render_report_tab(df_erlang, cfg)
+    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
 
 with tabs[8]:
+    render_report_tab(df_erlang, cfg)
+
+with tabs[9]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)
