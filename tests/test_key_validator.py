@@ -13,6 +13,7 @@ import datetime
 import json
 import sys
 import unittest
+from typing import Optional
 
 try:
     from cryptography.hazmat.primitives import hashes, serialization
@@ -32,7 +33,7 @@ def _generate_test_key_pair():
     return private_key, public_pem
 
 
-def _build_key(private_key, org: str, days: int | None = 365, issued_offset: int = 0) -> str:
+def _build_key(private_key, org: str, days: Optional[int] = 365, issued_offset: int = 0) -> str:
     """Build a signed deployment key string using the given private key."""
     today = datetime.date.today() + datetime.timedelta(days=issued_offset)
     payload = {

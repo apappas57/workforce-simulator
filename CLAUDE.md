@@ -48,6 +48,24 @@ Simulation design notes: see DES_NOTES.md
 | 24B | Multi-skill blended routing | ✅ Complete |
 | 25 | Production deployment (Railway) | ✅ Complete |
 | 26 | Intraday reforecast | ✅ Complete |
+| 27 | Roster optimisation enhancement | ✅ Complete |
+
+Phase 27 (roster optimisation enhancement) delivered: three targeted improvements to
+`ui/tab_roster.py` and `optimisation/lp_shift_optimizer.py`. (1) **Auto-scale apply**:
+"Apply suggested scale" button now updates `tpl_heads_{i}` session state keys for each
+active template slot and calls `st.rerun()` — previously it only updated the slider
+display without modifying templates. `template_slot_indices` list introduced alongside
+`templates` in the template-building loop to track which of the 6 slots are active.
+(2) **LP optimiser overhaul**: LP section restructured with a three-column inputs row
+(requirement curve, shift lengths, buffer %); runs save to `st.session_state["lp_result"]`
+so results persist across rerenders; after running, shows four summary metrics (total
+agents, paid hours, understaffed intervals, peak gap), a styled coverage-vs-requirement
+Plotly chart, and an "Apply LP plan to templates" button that writes the LP solution
+directly to `tpl_start_*`, `tpl_dur_*`, `tpl_heads_*`, `tpl_use_*` session state keys
+(with configurable overstaffing buffer %) then calls `st.rerun()`. (3) `lp_shift_optimizer.py`
+updated: output DataFrame now includes `start_hhmm` column, results are sorted by
+`start_min`, and headcount values are rounded from float to int cleanly.
+`lp_result: None` registered in `_init_session_state()` under Phase 27 block.
 
 Phase 26 (intraday reforecast) delivered: `ui/tab_intraday.py` — operational
 real-time reforecasting tab. User inputs current interval (shown as HH:MM) and

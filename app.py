@@ -162,6 +162,9 @@ def _init_session_state() -> None:
         # DES results (non-persisted)
         "blended_des_results": [],
 
+        # --- Phase 27: roster optimisation enhancement ---
+        "lp_result":               None,
+
         # --- Phase 26: intraday reforecast ---
         "intraday_result":         None,
         "intraday_current_interval": 32,

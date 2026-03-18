@@ -288,6 +288,7 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
     st.caption("Default: 486 min (8.1h elapsed), with 30 min unpaid lunch = 456 min (7.6h paid).")
 
     templates: List[Dict] = []
+    template_slot_indices: List[int] = []   # tracks which of the 6 slots are active
 
     hdr = st.columns(4)
     hdr[0].markdown("**Start**")
@@ -303,6 +304,7 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
         use   = c3.checkbox("Use", key=f"tpl_use_{i}")
         if use and int(heads) > 0:
             templates.append({"start": start, "duration_min": int(dur), "heads": int(heads)})
+            template_slot_indices.append(i)
 
     st.markdown("### Break rules by shift length")
     default_ruleset = [
@@ -712,7 +714,11 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
         a1, a2 = st.columns([1, 2])
         with a1:
             if st.button("Apply suggested scale"):
-                st.session_state["roster_scale"] = max(0.1, min(3.0, suggested))
+                new_scale = max(0.1, min(3.0, suggested))
+                st.session_state["roster_scale"] = new_scale
+                for slot_idx, tpl in zip(template_slot_indices, templates):
+                    st.session_state[f"tpl_heads_{slot_idx}"] = max(1, round(tpl["heads"] * new_scale))
+                st.rerun()
         with a2:
             st.session_state["roster_scale"] = st.slider("Roster scale multiplier", 0.10, 3.00, float(st.session_state["roster_scale"]), 0.05)
 
@@ -733,48 +739,147 @@ def render_roster_tab(df_erlang, cfg, num_intervals, staffing_df=None):
         )
         st.markdown("## Advanced optimisation tools")
     st.markdown("### Shift optimisation engine (LP solver)")
-
-    req_choice_lp = st.selectbox(
-        "Optimise against (LP)",
-        ["Erlang net (erlang_required_net_agents)", "Deterministic net (det_required_net_ceil)"],
-        index=0,
-        key="lp_req_choice",
+    st.caption(
+        "Finds the minimum headcount plan that meets the staffing requirement at every interval. "
+        "Use **Apply to templates** to push the solution into the shift template editor above."
     )
+
+    lp_col1, lp_col2, lp_col3 = st.columns([2, 1, 1])
+    with lp_col1:
+        req_choice_lp = st.selectbox(
+            "Optimise against (LP)",
+            ["Erlang net (erlang_required_net_agents)", "Deterministic net (det_required_net_ceil)"],
+            index=0,
+            key="lp_req_choice",
+        )
+    with lp_col2:
+        shift_lengths = st.multiselect(
+            "Allowed shift lengths (min)",
+            [240, 300, 360, 420, 486],
+            default=[486],
+        )
+    with lp_col3:
+        lp_buffer_pct = st.number_input(
+            "Buffer % (apply only)",
+            min_value=0,
+            max_value=50,
+            value=10,
+            step=1,
+            key="lp_buffer_pct",
+            help="Extra headcount added when applying the LP plan to templates, to compensate for break shrinkage.",
+        )
 
     req_col_lp = "erlang_required_net_agents" if "Erlang" in req_choice_lp else "det_required_net_ceil"
     req_curve_lp = df_erlang[req_col_lp].astype(float).to_numpy()
 
-    shift_lengths = st.multiselect(
-        "Allowed shift lengths (minutes)",
-        [240, 300, 360, 420, 486],
-        default=[486],
-    )
-
     start_window = st.slider(
         "Allowed shift start window (minutes from midnight)",
-        0,
-        24 * 60,
-        (420, 720),
+        0, 24 * 60, (420, 720),
     )
-
     allowed_starts = list(range(start_window[0], start_window[1], cfg.interval_minutes))
-
     st.caption(
-        f"LP start window: {start_window[0] // 60:02d}:{start_window[0] % 60:02d} to "
-        f"{start_window[1] // 60:02d}:{start_window[1] % 60:02d}"
+        f"Start window: {start_window[0] // 60:02d}:{start_window[0] % 60:02d} → "
+        f"{start_window[1] // 60:02d}:{start_window[1] % 60:02d} "
+        f"({len(allowed_starts)} candidate start times, {len(shift_lengths)} shift length(s))"
     )
 
-    if st.button("Run shift optimisation"):
-        plan_lp = optimise_shifts_lp(
-            req_curve_lp,
-            cfg.interval_minutes,
-            shift_lengths,
-            allowed_starts,
-        )
+    if st.button("⚡ Run LP optimisation", key="run_lp"):
+        with st.spinner("Running LP solver…"):
+            plan_lp = optimise_shifts_lp(
+                req_curve_lp,
+                cfg.interval_minutes,
+                shift_lengths,
+                allowed_starts,
+            )
         if plan_lp.empty:
+            st.session_state["lp_result"] = None
             st.warning("LP solver found no feasible solution with the current shift lengths and start window.")
         else:
-            st.dataframe(plan_lp, use_container_width=True)
+            st.session_state["lp_result"] = plan_lp
+
+    lp_result: pd.DataFrame | None = st.session_state.get("lp_result")
+
+    if lp_result is not None and not lp_result.empty:
+        # ── Compute LP coverage curve ──────────────────────────────────────────
+        n_lp = len(req_curve_lp)
+        coverage_lp = np.zeros(n_lp)
+        for _, row in lp_result.iterrows():
+            s = int(row["start_min"]) // cfg.interval_minutes
+            d = int(row["shift_length"]) // cfg.interval_minutes
+            coverage_lp[s: min(n_lp, s + d)] += int(row["heads"])
+
+        # ── Summary metrics ────────────────────────────────────────────────────
+        total_heads_lp    = int(lp_result["heads"].sum())
+        total_paid_hrs_lp = float((lp_result["heads"] * lp_result["shift_length"] / 60).sum())
+        under_intervals   = int((coverage_lp < req_curve_lp - 0.001).sum())
+        peak_gap_lp       = float((req_curve_lp - coverage_lp).clip(min=0).max())
+
+        lp_m1, lp_m2, lp_m3, lp_m4 = st.columns(4)
+        lp_m1.metric("Total agents (LP)", total_heads_lp)
+        lp_m2.metric("Total paid hours", f"{total_paid_hrs_lp:.1f}h")
+        lp_m3.metric("Understaffed intervals", under_intervals)
+        lp_m4.metric("Peak gap (agents)", f"{peak_gap_lp:.0f}")
+
+        # ── Plan table ─────────────────────────────────────────────────────────
+        st.dataframe(lp_result, use_container_width=True, hide_index=True)
+
+        # ── Coverage chart ─────────────────────────────────────────────────────
+        hhmm_x = [
+            f"{(i * cfg.interval_minutes) // 60:02d}:{(i * cfg.interval_minutes) % 60:02d}"
+            for i in range(n_lp)
+        ]
+        fig_lp = go.Figure()
+        fig_lp.add_trace(go.Scatter(
+            x=hhmm_x, y=req_curve_lp,
+            name="Requirement",
+            mode="lines",
+            line=dict(color=PALETTE[4], width=2, dash="dash"),
+        ))
+        fig_lp.add_trace(go.Scatter(
+            x=hhmm_x, y=coverage_lp,
+            name="LP coverage",
+            mode="lines",
+            line=dict(color=PALETTE[0], width=2),
+            fill="tonexty",
+            fillcolor="rgba(99,102,241,0.12)",
+        ))
+        fig_lp.update_layout(
+            xaxis_title="Time of day",
+            yaxis_title="Agents",
+            height=280,
+            legend=dict(orientation="h", y=1.1),
+        )
+        apply_dark_theme(fig_lp)
+        st.plotly_chart(fig_lp, use_container_width=True)
+
+        # ── Apply to templates ─────────────────────────────────────────────────
+        st.markdown("##### Apply LP plan to shift templates")
+        n_plan_rows = len(lp_result)
+        if n_plan_rows > 6:
+            st.warning(
+                f"LP plan has {n_plan_rows} rows — only the first 6 will be applied "
+                f"(template editor supports up to 6 shifts)."
+            )
+        st.caption(
+            f"Populates the shift template editor at the top of this tab with the LP plan, "
+            f"adding {lp_buffer_pct}% headcount buffer to cover break shrinkage. "
+            f"Scroll up after applying to review the updated schedule."
+        )
+        if st.button("⬇ Apply LP plan to shift templates", key="lp_apply_templates"):
+            plan_sorted = lp_result.sort_values("start_min").reset_index(drop=True)
+            for i in range(6):
+                st.session_state[f"tpl_use_{i}"] = False
+                st.session_state[f"tpl_heads_{i}"] = 0
+            for slot_idx, (_, row) in enumerate(plan_sorted.head(6).iterrows()):
+                h_val, m_val = divmod(int(row["start_min"]), 60)
+                buffered = max(1, round(int(row["heads"]) * (1 + lp_buffer_pct / 100)))
+                st.session_state[f"tpl_start_{slot_idx}"] = f"{h_val:02d}:{m_val:02d}"
+                st.session_state[f"tpl_dur_{slot_idx}"]   = int(row["shift_length"])
+                st.session_state[f"tpl_heads_{slot_idx}"] = buffered
+                st.session_state[f"tpl_use_{slot_idx}"]   = True
+            n_applied = min(len(plan_sorted), 6)
+            st.success(f"✓ Applied {n_applied} shift template(s). Scroll up to review the updated schedule.")
+            st.rerun()
 
     st.markdown("## Shift start-time optimiser v1 (coverage)")
 

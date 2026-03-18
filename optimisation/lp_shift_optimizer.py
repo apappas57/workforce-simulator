@@ -39,10 +39,15 @@ def optimise_shifts_lp(requirement, interval_minutes, shift_lengths, allowed_sta
 
     for (start, length), var in shift_vars.items():
         if var.value() > 0:
+            h, m = divmod(start, 60)
             results.append({
                 "start_min": start,
+                "start_hhmm": f"{h:02d}:{m:02d}",
                 "shift_length": length,
-                "heads": int(var.value())
+                "heads": int(round(var.value())),
             })
 
-    return pd.DataFrame(results)
+    df = pd.DataFrame(results)
+    if not df.empty:
+        df = df.sort_values("start_min").reset_index(drop=True)
+    return df

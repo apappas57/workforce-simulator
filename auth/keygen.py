@@ -18,6 +18,7 @@ import datetime
 import json
 import sys
 from pathlib import Path
+from typing import Optional
 
 try:
     from cryptography.hazmat.primitives import hashes, serialization
@@ -29,7 +30,7 @@ except ImportError:
 _PRIVATE_KEY_PATH = Path(__file__).parent / "private_key.pem"
 
 
-def generate_key(org: str, days: int | None = 365) -> str:
+def generate_key(org: str, days: Optional[int] = 365) -> str:
     """Generate a signed deployment key for the given organisation.
 
     Parameters
