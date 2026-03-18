@@ -245,14 +245,26 @@ def render_intraday_tab(df_erlang: pd.DataFrame | None, cfg: SimConfig) -> None:
         mode="lines",
         line=dict(color=PALETTE[0], width=2),
     ))
-    # Shade elapsed region
+    # Shade elapsed region — use add_shape to avoid add_vrect annotation
+    # issues on categorical x-axes in plotly 6.x
     if current_interval > 0:
-        fig_demand.add_vrect(
+        fig_demand.add_shape(
+            type="rect",
             x0=result["hhmm"].iloc[0],
             x1=result["hhmm"].iloc[current_interval - 1],
+            y0=0, y1=1,
+            xref="x", yref="paper",
             fillcolor="rgba(255,255,255,0.05)",
             layer="below", line_width=0,
-            annotation_text="Elapsed", annotation_position="top left",
+        )
+        fig_demand.add_annotation(
+            x=result["hhmm"].iloc[0], y=1,
+            xref="x", yref="paper",
+            text="Elapsed",
+            showarrow=False,
+            yanchor="bottom",
+            xanchor="left",
+            font=dict(color="#71717A", size=10),
         )
     fig_demand.update_layout(
         xaxis_title="Interval",
@@ -282,14 +294,23 @@ def render_intraday_tab(df_erlang: pd.DataFrame | None, cfg: SimConfig) -> None:
         fill="tonexty",
         fillcolor="rgba(99,102,241,0.15)",
     ))
-    # Mark current time
+    # Mark current time — use add_shape + add_annotation instead of add_vline
+    # because add_vline fails on categorical (string) x-axes in plotly 6.x
     current_hhmm = _interval_to_hhmm(current_interval, interval_minutes)
-    fig_agents.add_vline(
-        x=current_hhmm,
-        line_dash="dot",
-        line_color=PALETTE[4],
-        annotation_text="Now",
-        annotation_position="top",
+    fig_agents.add_shape(
+        type="line",
+        x0=current_hhmm, x1=current_hhmm,
+        y0=0, y1=1,
+        xref="x", yref="paper",
+        line=dict(color=PALETTE[4], width=1, dash="dot"),
+    )
+    fig_agents.add_annotation(
+        x=current_hhmm, y=1,
+        xref="x", yref="paper",
+        text="Now",
+        showarrow=False,
+        yanchor="bottom",
+        font=dict(color=PALETTE[4], size=11),
     )
     fig_agents.update_layout(
         xaxis_title="Interval",
