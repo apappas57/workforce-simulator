@@ -1,3 +1,4 @@
+import pytz
 import streamlit as st
 
 from persistence.config_store import (
@@ -246,15 +247,18 @@ def render_sidebar():
 
         st.divider()
         st.header("Time zone")
+        _tz_options = sorted(pytz.common_timezones)
         st.selectbox(
             "Input start_ts time zone",
-            ["UTC", "Australia/Melbourne"],
+            _tz_options,
+            index=_tz_options.index(st.session_state.get("sb_input_tz", "UTC")),
             help="What timezone the CSV start_ts column is in.",
             key="sb_input_tz",
         )
         st.selectbox(
             "Model / display time zone",
-            ["Australia/Melbourne", "UTC"],
+            _tz_options,
+            index=_tz_options.index(st.session_state.get("sb_model_tz", "Australia/Melbourne")),
             help="Timezone used for interval bucketing, charts, and roster alignment.",
             key="sb_model_tz",
         )

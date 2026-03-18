@@ -58,7 +58,7 @@ class TestDeserialise(unittest.TestCase):
         self.assertEqual(sm._deserialise("opt_horizon", 24), 24)
 
     def test_invalid_input_tz_falls_back_to_utc(self):
-        result = sm._deserialise("sb_input_tz", "Pacific/Auckland")
+        result = sm._deserialise("sb_input_tz", "Not/ATimezone")
         self.assertEqual(result, "UTC")
 
     def test_invalid_model_tz_falls_back_to_melbourne(self):

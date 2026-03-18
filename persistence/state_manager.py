@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytz
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ PERSISTENT_DF_KEYS: list = [
 ]
 
 # ── Selectbox option validation ────────────────────────────────────────────────
-_TZ_OPTIONS = {"UTC", "Australia/Melbourne"}
+_TZ_OPTIONS = set(pytz.common_timezones)
 
 # ── Keys that hold date values and need ISO serialisation ─────────────────────
 _DATE_KEYS = {"planning_start_date", "opt_planning_start"}
