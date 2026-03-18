@@ -359,10 +359,10 @@ def render_intraday_tab(df_erlang: pd.DataFrame | None, cfg: SimConfig) -> None:
             line=dict(color=PALETTE[0]),
         ))
         fig_sl.add_hline(
-            y=cfg.service_level_target * 100,
+            y=cfg.sl_target * 100,
             line_dash="dot",
             line_color=PALETTE[4],
-            annotation_text=f"Target {cfg.service_level_target*100:.0f}%",
+            annotation_text=f"Target {cfg.sl_target*100:.0f}%",
         )
         fig_sl.update_layout(
             xaxis_title="Interval",
