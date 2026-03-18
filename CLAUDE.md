@@ -46,7 +46,19 @@ Simulation design notes: see DES_NOTES.md
 | 23 | Deployment hardening | ✅ Complete |
 | 24A | Test coverage (phases 13–23) | ✅ Complete |
 | 24B | Multi-skill blended routing | ✅ Complete |
-| 25 | — | 🔜 Next |
+| 25 | Production deployment (Railway) | ✅ Complete |
+| 26 | Intraday reforecast | ✅ Complete |
+
+Phase 26 (intraday reforecast) delivered: `ui/tab_intraday.py` — operational
+real-time reforecasting tab. User inputs current interval (shown as HH:MM) and
+actual calls received so far; engine computes a scale factor and applies it to
+remaining intervals. Re-runs Erlang C on scaled demand. Four summary metrics:
+demand vs plan %, projected day total, at-risk interval count, peak agent gap.
+Two charts: demand plan vs reforecast (bar + line), agent requirement comparison
+with shaded gap and "Now" marker. At-risk intervals table with gradient
+highlighting. Collapsible SL%/occupancy projection for remaining intervals.
+Auto-runs on load with plan defaults. Inserted at tabs[9]; downstream tabs
+renumbered. Session state keys added under Phase 26 block in `_init_session_state()`.
 
 Phase 23 (deployment hardening) delivered: end-to-end cloud deployment support
 for Railway and Render. `render.yaml` and `railway.toml` platform config files
@@ -76,6 +88,20 @@ checking `RuntimeError` is raised when openpyxl is absent. `tests/test_charts.py
 26 tests covering `PALETTE` (length, format), semantic colour constants, and
 `apply_dark_theme()` (bgcolor, grid colour, font, title colour); all chart test
 classes use `@skipUnless` guards for both plotly and `ui.charts` importability.
+
+Phase 25 (production deployment) delivered: live Railway deployment for AA Limited.
+`railway.toml` corrected: `restartPolicyType` changed to `"ON_FAILURE"` (uppercase,
+Railway's current API requirement); `startCommand` added as `sh -c 'streamlit run
+app.py --server.port=$PORT ...'` to ensure Railway's injected `PORT` env var is
+shell-expanded before being passed to Streamlit (direct exec form does not expand
+vars); `healthcheckTimeout` bumped to 300 s to accommodate cold-start import time.
+`auth/keygen.py` and `tests/test_key_validator.py` fixed for Python 3.9
+compatibility: `int | None` union syntax (3.10+) replaced with `Optional[int]` from
+`typing`. Deployment key generated for AA Limited (expires 2027-03-18).
+`auth/credentials.yaml` created from example with bcrypt-hashed credentials (git-
+ignored). `DEPLOYMENT_KEY` and `CREDENTIALS_YAML_B64` set as Railway environment
+variables. Persistent volume mounted at `/app/state`. App live and health-check
+passing on Railway us-east4.
 
 Phase 24B (multi-skill blended routing) delivered: analytical and simulation models
 for comparing siloed vs. fully-blended agent pool staffing. `models/multi_skill.py`

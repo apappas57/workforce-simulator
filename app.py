@@ -52,6 +52,7 @@ from ui.tab_roster import render_roster_tab
 from ui.tab_scenarios import render_scenarios_tab
 from ui.tab_multiqueue import render_multiqueue_tab
 from ui.tab_blended import render_blended_tab
+from ui.tab_intraday import render_intraday_tab
 try:
     from supply.staffing_loader import load_staffing_csv, validate_staffing_data
     _staffing_loader_available = True
@@ -160,6 +161,13 @@ def _init_session_state() -> None:
         "bl_num_intervals": 96,
         # DES results (non-persisted)
         "blended_des_results": [],
+
+        # --- Phase 26: intraday reforecast ---
+        "intraday_result":         None,
+        "intraday_current_interval": 32,
+        "intraday_actual_calls":   0.0,
+        "intraday_override_aht":   False,
+        "intraday_actual_aht":     360.0,
 
         # --- Phase 14: scenario planning ---
         "sc_des_results":          {},    # dict: scenario_name → DES summary
@@ -747,6 +755,7 @@ tabs = st.tabs([
     "Multi-Queue",
     "Blended Queues",
     "Forecast",
+    "Intraday",
     "Planning",
     "Optimisation",
     "Cost",
@@ -782,16 +791,19 @@ with tabs[8]:
     render_forecast_tab()
 
 with tabs[9]:
-    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_intraday_tab(df_erlang, cfg)
 
 with tabs[10]:
-    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
+    render_planning_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[11]:
-    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
+    render_optimisation_tab(shrinkage_pct=cfg.shrinkage * 100.0)
 
 with tabs[12]:
-    render_report_tab(df_erlang, cfg)
+    render_cost_tab(df_erlang, cost_cfg, cfg, roster_df=roster_df)
 
 with tabs[13]:
+    render_report_tab(df_erlang, cfg)
+
+with tabs[14]:
     render_downloads_tab(df_inputs, df_erlang, roster_df)
