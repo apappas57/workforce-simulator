@@ -137,11 +137,15 @@ def render_intraday_tab(df_erlang: pd.DataFrame | None, cfg: SimConfig) -> None:
     col1, col2, col3 = st.columns(3)
 
     with col1:
+        _max_iv = n_intervals - 1
+        # Clamp stored value to current max to prevent StreamlitValueAboveMaxError
+        if st.session_state.get("intraday_current_interval", 0) > _max_iv:
+            st.session_state["intraday_current_interval"] = min(int(_max_iv * 0.33), _max_iv)
         current_interval = st.slider(
             "Current interval",
             min_value=1,
-            max_value=n_intervals - 1,
-            value=min(int(n_intervals * 0.33), n_intervals - 1),
+            max_value=_max_iv,
+            value=min(int(n_intervals * 0.33), _max_iv),
             help="How many intervals have elapsed so far today.",
             key="intraday_current_interval",
             format="%d",
